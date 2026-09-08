@@ -34,19 +34,17 @@
 - **Atomic Rollback on Failure**: If MongoDB fails to create the application record after file upload, `DeleteObjectCommand` automatically purges the orphaned file from S3.
 - **Strict File Validation**: Multer with `memoryStorage()`, enforcing PDF-only MIME/extension validation and a 5MB size limit.
 
-### 4. 🎨 Modern Glassmorphism UI (React 19 + Tailwind)
-- **Sleek Aesthetic**: Tailwind CSS with dark slate tones, glassmorphism cards (`backdrop-blur-xl`), radiant glow accents, and custom scrollbars.
+### 4. 🏢 High-Density Enterprise SaaS Interface (React 19 + Tailwind)
+- **Utilitarian Aesthetic**: Zero AI slop—emulates the dense, utilitarian, high-trust aesthetic of modern enterprise portals (Linear, Wellfound, Stripe, GitHub Jobs) with a neutral monochrome zinc palette and classic enterprise navy accents.
+- **Two-Pane Split Job Feed (`/jobs`)**: Scrollable compact job cards on the left pane and a sticky live detail view on the right pane with discrete filter controls (search keywords, location, salary range, and tech stack multi-select pills).
 - **Candidate Hub**:
-  - Track submitted applications with real-time status badges (`PENDING`, `INTERVIEW`, `ACCEPTED`, `REJECTED`).
-  - Inspect employer notes and interview feedback.
-  - Preview submitted PDF resumes with signed S3 URLs.
-  - Save/bookmark jobs for later review.
-  - Manage candidate profile, bio, and interactive skill tags.
-- **Employer Hub**:
-  - Dashboard of posted jobs with status toggles (Active vs Paused), edit modal, and deletion.
-  - Applicant pipeline per job with candidate details, skills, and cover letter viewer.
-  - Instant status transition buttons with optional interview notes.
-  - Publish new roles with validation and deadline date pickers.
+  - Track submitted applications with restrained status badges (`PENDING`, `INTERVIEW`, `ACCEPTED`, `REJECTED`).
+  - Securely preview PDF resumes via pre-signed S3 links (with zero-cost local fallback).
+  - Manage bookmarked roles and candidate profile/skills.
+- **Employer Management Hub**:
+  - Clean data `<table>` layout with Active vs Archived tabs.
+  - Slide-over **Applicant Drawer** showing all candidates per job with matching tech skills, status toggles, and resume inspection.
+- **Purpose-Built Drag & Drop Modal**: Styled cleanly with an explicit dashed border (`border-dashed border-zinc-300`) and real file validation state.
 - **One-Click Demo Fill**: Quick login shortcuts for evaluators to test Candidate and Employer workflows without manually registering accounts.
 
 ---
@@ -93,25 +91,25 @@ cms/
     │   │   ├── job.api.js            # Job API service
     │   │   └── application.api.js    # Application API service
     │   ├── components/
-    │   │   ├── Navbar.jsx            # Dynamic navbar with role badges & mobile menu
-    │   │   ├── Footer.jsx            # Sleek footer
-    │   │   ├── JobCard.jsx           # Card with salary formatting, tech chips, save button
-    │   │   ├── ApplyModal.jsx        # Drag-and-drop PDF resume upload modal
-    │   │   ├── JobFormModal.jsx      # Employer job create / edit modal
-    │   │   ├── ProtectedRoute.jsx    # React Router role-based route guard
-    │   │   └── LoadingSpinner.jsx    # Animated loading spinner
+    │   │   ├── ui/                   # Badges, Buttons, Inputs primitives
+    │   │   ├── Navbar.jsx            # Enterprise navbar with role badges & mobile menu
+    │   │   ├── Footer.jsx            # Utilitarian footer
+    │   │   ├── JobCard.jsx           # High-density job card with tech chips
+    │   │   ├── ApplyModal.jsx        # Purpose-built drag & drop PDF resume upload modal
+    │   │   ├── JobFormModal.jsx      # Employer job requisition create / edit modal
+    │   │   ├── ApplicantDrawer.jsx   # Slide-over applicant pipeline panel
+    │   │   └── ProtectedRoute.jsx    # React Router role-based route guard
     │   ├── context/
     │   │   └── AuthContext.jsx       # Authentication state, session sync, saved jobs
     │   ├── pages/
-    │   │   ├── HomePage.jsx          # Hero, live search, sidebar filters, job grid
-    │   │   ├── JobDetailPage.jsx     # Full job details, tech stack, apply modal
-    │   │   ├── LoginPage.jsx         # Login with quick demo fill shortcuts
+    │   │   ├── JobFeedPage.jsx       # Two-pane split job feed with live detail view
+    │   │   ├── LoginPage.jsx         # Enterprise login with quick demo shortcuts
     │   │   ├── RegisterPage.jsx      # Register with role selector (Candidate vs Employer)
-    │   │   ├── CandidateDashboard.jsx# Applied history, saved jobs, profile editing
-    │   │   └── EmployerDashboard.jsx # Posted jobs, applicant pipeline, status toggles
+    │   │   ├── CandidateDashboard.jsx# Applications tracker, saved jobs, profile editing
+    │   │   └── EmployerDashboard.jsx # Data table layout, active/archived tabs, drawer
     │   ├── App.jsx                   # React Router routing
     │   ├── main.jsx                  # React DOM mount
-    │   └── index.css                 # Tailwind design system & glassmorphism
+    │   └── index.css                 # Utilitarian enterprise design system
     ├── vite.config.js                # Port 5173 with proxy to backend port 5000
     ├── tailwind.config.js            # Tailwind configuration
     └── package.json

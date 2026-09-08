@@ -3,197 +3,216 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Briefcase,
-  User,
-  LogOut,
-  PlusCircle,
   Bookmark,
   FileText,
+  Plus,
+  LogOut,
   Menu,
   X,
-  Layers,
-  Sparkles,
+  Building,
+  User,
+  ExternalLink,
 } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
 
-const Navbar = () => {
+export const Navbar = () => {
   const { user, isAuthenticated, isEmployer, isCandidate, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const isActive = (path) => {
+    if (path === '/jobs') {
+      return location.pathname === '/' || location.pathname === '/jobs';
+    }
+    return location.pathname.startsWith(path);
+  };
+
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
     setMobileMenuOpen(false);
   };
 
-  const isActive = (path) => location.pathname === path;
-
   return (
-    <header className="sticky top-0 z-50 glass-panel border-b border-white/10 bg-[#0b0f19]/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xs border-b border-zinc-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform duration-200">
-              <Briefcase className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
-                JobSphere
-              </span>
-              <span className="text-[10px] tracking-wider uppercase font-semibold text-blue-400 -mt-1">
-                Portal & Career Hub
-              </span>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            <Link
-              to="/"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive('/')
-                  ? 'text-blue-400 bg-blue-500/10'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              Explore Jobs
+        <div className="flex items-center justify-between h-14">
+          {/* Brand and primary links */}
+          <div className="flex items-center gap-8">
+            <Link to="/jobs" className="flex items-center gap-2.5 group">
+              <div className="w-7 h-7 rounded bg-zinc-900 flex items-center justify-center text-white">
+                <Briefcase className="w-4 h-4 text-zinc-100" strokeWidth={1.5} />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold tracking-tight text-zinc-900 text-sm">
+                  JobSphere
+                </span>
+                <span className="text-2xs font-mono px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600 border border-zinc-200">
+                  v1.0
+                </span>
+              </div>
             </Link>
 
-            {isAuthenticated && isCandidate && (
-              <>
-                <Link
-                  to="/candidate/dashboard?tab=applications"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 ${
-                    location.pathname.startsWith('/candidate') && location.search.includes('tab=applications')
-                      ? 'text-blue-400 bg-blue-500/10'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <FileText className="w-4 h-4 text-blue-400" />
-                  <span>My Applications</span>
-                </Link>
-                <Link
-                  to="/candidate/dashboard?tab=saved"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 ${
-                    location.pathname.startsWith('/candidate') && location.search.includes('tab=saved')
-                      ? 'text-blue-400 bg-blue-500/10'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Bookmark className="w-4 h-4 text-amber-400" />
-                  <span>Saved Jobs</span>
-                </Link>
-              </>
-            )}
+            {/* Role-specific Navigation Links */}
+            <nav className="hidden md:flex items-center gap-1">
+              <Link
+                to="/jobs"
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  isActive('/jobs') && !location.pathname.startsWith('/candidate') && !location.pathname.startsWith('/employer')
+                    ? 'bg-zinc-100 text-zinc-900'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+                }`}
+              >
+                Find Jobs
+              </Link>
 
-            {isAuthenticated && isEmployer && (
-              <>
-                <Link
-                  to="/employer/dashboard?tab=posts"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 ${
-                    location.pathname.startsWith('/employer') && !location.search.includes('tab=applicants')
-                      ? 'text-blue-400 bg-blue-500/10'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Layers className="w-4 h-4 text-blue-400" />
-                  <span>My Job Posts</span>
-                </Link>
-                <Link
-                  to="/employer/dashboard?tab=applicants"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1.5 ${
-                    location.pathname.startsWith('/employer') && location.search.includes('tab=applicants')
-                      ? 'text-blue-400 bg-blue-500/10'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
-                  <span>Applicants</span>
-                </Link>
-              </>
-            )}
-          </nav>
-
-          {/* Right Action / Profile */}
-          <div className="hidden md:flex items-center space-x-3">
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                {isEmployer && (
+              {/* Candidate Specific Links */}
+              {isAuthenticated && isCandidate && (
+                <>
                   <Link
-                    to="/employer/dashboard?action=post"
-                    className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-600/20 transition-all duration-150 transform hover:-translate-y-0.5"
+                    to="/candidate/dashboard?tab=applications"
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      location.pathname.startsWith('/candidate') && (location.search.includes('tab=applications') || !location.search)
+                        ? 'bg-zinc-100 text-zinc-900'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+                    }`}
                   >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>Post Job</span>
+                    <FileText className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
+                    <span>My Applications</span>
                   </Link>
+
+                  <Link
+                    to="/candidate/dashboard?tab=saved"
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      location.pathname.startsWith('/candidate') && location.search.includes('tab=saved')
+                        ? 'bg-zinc-100 text-zinc-900'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <Bookmark className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
+                    <span>Saved Jobs</span>
+                  </Link>
+                </>
+              )}
+
+              {/* Employer Specific Links */}
+              {isAuthenticated && isEmployer && (
+                <>
+                  <Link
+                    to="/employer/dashboard"
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      location.pathname.startsWith('/employer') && !location.search.includes('tab=profile')
+                        ? 'bg-zinc-100 text-zinc-900'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <Building className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
+                    <span>Dashboard</span>
+                  </Link>
+
+                  <Link
+                    to="/employer/dashboard?tab=profile"
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      location.pathname.startsWith('/employer') && location.search.includes('tab=profile')
+                        ? 'bg-zinc-100 text-zinc-900'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
+                    <span>Company Profile</span>
+                  </Link>
+                </>
+              )}
+            </nav>
+          </div>
+
+          {/* Right Action / Role Session Badge */}
+          <div className="hidden md:flex items-center gap-3">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                {isEmployer && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    icon={Plus}
+                    onClick={() => navigate('/employer/dashboard?action=post')}
+                  >
+                    Post a Job
+                  </Button>
                 )}
 
-                {/* Profile Pill */}
-                <Link
-                  to={isEmployer ? '/employer/dashboard' : '/candidate/dashboard?tab=profile'}
-                  className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition-all"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white uppercase">
-                    {user.name ? user.name[0] : 'U'}
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-semibold text-slate-200 leading-tight">
-                      {user.name.split(' ')[0]}
-                    </span>
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-blue-400">
-                      {user.role}
-                    </span>
-                  </div>
-                </Link>
+                {/* Session Role Indicator Badge */}
+                <div className="flex items-center gap-2 pl-2 border-l border-zinc-200">
+                  <span
+                    className={`px-2 py-0.5 rounded text-2xs font-mono uppercase font-semibold tracking-wider ${
+                      isEmployer
+                        ? 'bg-purple-500/10 text-purple-700 border border-purple-200'
+                        : 'bg-zinc-100 text-zinc-700 border border-zinc-200'
+                    }`}
+                  >
+                    {user.role}
+                  </span>
 
-                <button
-                  onClick={handleLogout}
-                  title="Logout"
-                  className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                  <span className="text-xs font-medium text-zinc-700 max-w-[120px] truncate">
+                    {user.name}
+                  </span>
+
+                  <button
+                    onClick={handleLogout}
+                    title="Sign Out"
+                    className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" strokeWidth={1.5} />
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => navigate('/login')}
                 >
                   Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-blue-500/20 transition-all duration-200 transform hover:-translate-y-0.5"
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => navigate('/register')}
                 >
-                  Get Started
-                </Link>
+                  Create Account
+                </Button>
               </div>
             )}
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile hamburger */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 focus:outline-none"
+              className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              ) : (
+                <Menu className="w-5 h-5" strokeWidth={1.5} />
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu dropdown */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/10 bg-[#0e1626] px-4 pt-3 pb-5 space-y-2">
+        <div className="md:hidden border-t border-zinc-200 bg-white px-4 py-3 space-y-2">
           <Link
-            to="/"
+            to="/jobs"
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-200 hover:bg-white/5"
+            className="block px-2.5 py-1.5 rounded text-xs font-medium text-zinc-800 hover:bg-zinc-100"
           >
-            Explore Jobs
+            Find Jobs
           </Link>
 
           {isAuthenticated ? (
@@ -203,23 +222,16 @@ const Navbar = () => {
                   <Link
                     to="/candidate/dashboard?tab=applications"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-base font-medium text-slate-200 hover:bg-white/5"
+                    className="block px-2.5 py-1.5 rounded text-xs font-medium text-zinc-800 hover:bg-zinc-100"
                   >
                     My Applications
                   </Link>
                   <Link
                     to="/candidate/dashboard?tab=saved"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-base font-medium text-slate-200 hover:bg-white/5"
+                    className="block px-2.5 py-1.5 rounded text-xs font-medium text-zinc-800 hover:bg-zinc-100"
                   >
                     Saved Jobs
-                  </Link>
-                  <Link
-                    to="/candidate/dashboard?tab=profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-base font-medium text-slate-200 hover:bg-white/5"
-                  >
-                    Profile Settings
                   </Link>
                 </>
               )}
@@ -227,63 +239,58 @@ const Navbar = () => {
               {isEmployer && (
                 <>
                   <Link
-                    to="/employer/dashboard?tab=posts"
+                    to="/employer/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-base font-medium text-slate-200 hover:bg-white/5"
+                    className="block px-2.5 py-1.5 rounded text-xs font-medium text-zinc-800 hover:bg-zinc-100"
                   >
-                    My Job Posts
-                  </Link>
-                  <Link
-                    to="/employer/dashboard?tab=applicants"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-base font-medium text-slate-200 hover:bg-white/5"
-                  >
-                    Applicants
+                    Dashboard
                   </Link>
                   <Link
                     to="/employer/dashboard?action=post"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2 rounded-lg text-base font-medium text-blue-400 bg-blue-500/10"
+                    className="block px-2.5 py-1.5 rounded text-xs font-medium text-zinc-900 font-semibold"
                   >
-                    + Post New Job
+                    + Post a Job
                   </Link>
                 </>
               )}
 
-              <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
-                    {user.name ? user.name[0] : 'U'}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">{user.name}</p>
-                    <p className="text-xs text-blue-400">{user.role}</p>
-                  </div>
-                </div>
+              <div className="pt-2 border-t border-zinc-100 flex items-center justify-between">
+                <span className="text-xs text-zinc-500">
+                  {user.name} ({user.role})
+                </span>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20"
+                  className="text-xs font-medium text-rose-600"
                 >
-                  Logout
+                  Sign Out
                 </button>
               </div>
             </>
           ) : (
-            <div className="pt-4 border-t border-white/10 space-y-2">
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-center py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-white/5"
+            <div className="pt-2 border-t border-zinc-100 flex gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  navigate('/login');
+                  setMobileMenuOpen(false);
+                }}
               >
                 Sign In
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-center py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500"
+              </Button>
+              <Button
+                size="sm"
+                variant="primary"
+                className="w-full"
+                onClick={() => {
+                  navigate('/register');
+                  setMobileMenuOpen(false);
+                }}
               >
-                Create Free Account
-              </Link>
+                Sign Up
+              </Button>
             </div>
           )}
         </div>

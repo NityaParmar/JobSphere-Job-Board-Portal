@@ -1,32 +1,31 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages
-import HomePage from './pages/HomePage';
-import JobDetailPage from './pages/JobDetailPage';
+import JobFeedPage from './pages/JobFeedPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CandidateDashboard from './pages/CandidateDashboard';
 import EmployerDashboard from './pages/EmployerDashboard';
 
-// 404 Component
+// 404 Fallback
 const NotFoundPage = () => (
-  <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
-    <h1 className="text-6xl font-extrabold text-blue-500 mb-4">404</h1>
-    <h2 className="text-2xl font-bold text-white mb-2">Page Not Found</h2>
-    <p className="text-sm text-slate-400 max-w-sm mb-6">
-      The page you are looking for might have been moved, removed, or never existed.
+  <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4 space-y-3">
+    <span className="text-2xs font-mono text-zinc-400 uppercase tracking-widest">404 Error</span>
+    <h2 className="text-base font-semibold text-zinc-900">Page Not Found</h2>
+    <p className="text-xs text-zinc-500 max-w-sm">
+      The requested route does not exist or you do not have permission to view it.
     </p>
-    <Link
-      to="/"
-      className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20"
+    <a
+      href="/jobs"
+      className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
     >
-      Return to Home
-    </Link>
+      Return to Jobs
+    </a>
   </div>
 );
 
@@ -34,17 +33,20 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen bg-zinc-50 text-zinc-900">
           <Navbar />
           <main className="flex-grow">
             <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/jobs/:id" element={<JobDetailPage />} />
+              {/* Public Job Feed (Two-Pane Split Layout) */}
+              <Route path="/" element={<JobFeedPage />} />
+              <Route path="/jobs" element={<JobFeedPage />} />
+              <Route path="/jobs/:id" element={<JobFeedPage />} />
+
+              {/* Auth Pages */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
-              {/* Protected Candidate Routes */}
+              {/* Candidate Dashboard */}
               <Route
                 path="/candidate/dashboard"
                 element={
@@ -54,7 +56,7 @@ function App() {
                 }
               />
 
-              {/* Protected Employer Routes */}
+              {/* Employer Dashboard */}
               <Route
                 path="/employer/dashboard"
                 element={
@@ -64,7 +66,7 @@ function App() {
                 }
               />
 
-              {/* 404 Fallback */}
+              {/* Catch-all */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>

@@ -50,11 +50,7 @@ router.patch(
 // Shared route (both candidate and employer can access)
 // ---------------------------------------------------------------------------
 
-// Get pre-signed URL (or local URL) for resume viewing
+// Get pre-signed URL for resume viewing
 router.get('/:id/resume', protect, getResumeUrl);
-
-// Stream local resume file
-const { downloadLocalResume } = require('../controllers/application.controller');
-router.get('/download-resume/:key', downloadLocalResume);
 
 module.exports = router;

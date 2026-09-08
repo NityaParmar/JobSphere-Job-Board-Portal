@@ -290,34 +290,10 @@ const getResumeUrl = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Stream local resume file (used when AWS keys are not configured)
- * @route   GET /api/applications/download-resume/:key
- * @access  Public / Token-safe
- */
-const path = require('path');
-const fs = require('fs');
-const downloadLocalResume = (req, res, next) => {
-  try {
-    const { key } = req.params;
-    const filePath = path.join(__dirname, '../../uploads', key);
-    if (!fs.existsSync(filePath)) {
-      throw ApiError.notFound('Resume file not found on local storage');
-    }
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="resume.pdf"');
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   applyToJob,
   getMyApplications,
   getApplicantsForJob,
   updateApplicationStatus,
   getResumeUrl,
-  downloadLocalResume,
 };

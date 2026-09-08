@@ -1,17 +1,13 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
 import {
-  Building2,
   MapPin,
-  DollarSign,
-  Briefcase,
+  Clock,
   Bookmark,
   BookmarkCheck,
-  Calendar,
-  Sparkles,
-  ArrowRight,
+  Building2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Badge } from './ui/Badge';
 
 const formatSalary = (min, max) => {
   if (!min && !max) return 'Competitive';
@@ -19,7 +15,7 @@ const formatSalary = (min, max) => {
     if (val >= 1000) return `$${(val / 1000).toFixed(0)}k`;
     return `$${val}`;
   };
-  return `${formatK(min)} - ${formatK(max)} / yr`;
+  return `${formatK(min)} - ${formatK(max)}`;
 };
 
 const formatTimeAgo = (dateString) => {
@@ -28,7 +24,7 @@ const formatTimeAgo = (dateString) => {
   const now = new Date();
   const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
   if (diffInDays === 0) return 'Today';
-  if (diffInDays === 1) return 'Yesterday';
+  if (diffInDays === 1) return '1d ago';
   if (diffInDays < 30) return `${diffInDays}d ago`;
   return date.toLocaleDateString();
 };
@@ -42,147 +38,105 @@ const formatEnum = (str) => {
     .join('-');
 };
 
-const JobCard = ({ job, onApplyClick }) => {
+export const JobCard = ({ job, isSelected = false, onSelect }) => {
   const { user, isCandidate, isJobSaved, toggleSaveJob } = useAuth();
-  const navigate = useNavigate();
-  const [saving, setSaving] = useState(false);
   const saved = isJobSaved(job._id);
 
   const handleBookmark = async (e) => {
-    e.preventDefault();
     e.stopPropagation();
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    if (!isCandidate) return;
-
+    if (!user || !isCandidate) return;
     try {
-      setSaving(true);
       await toggleSaveJob(job._id);
     } catch (err) {
       console.error(err);
-    } finally {
-      setSaving(false);
     }
   };
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-slate-800/80 hover:border-blue-500/40 transition-all duration-300 flex flex-col justify-between group">
-      <div>
-        {/* Header: Company & Bookmark */}
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-700/60 flex items-center justify-center text-lg font-bold text-blue-400 shadow-inner group-hover:scale-105 transition-transform">
-              {job.company ? job.company[0].toUpperCase() : 'C'}
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-slate-400 group-hover:text-blue-300 transition-colors flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5" />
-                {job.company}
-              </h4>
-              <Link to={`/jobs/${job._id}`}>
-                <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
-                  {job.title}
-                </h3>
-              </Link>
-            </div>
+    <div
+      onClick={() => onSelect && onSelect(job)}
+      className={`relative p-4 rounded-lg border transition-all cursor-pointer select-none text-left ${
+        isSelected
+          ? 'bg-zinc-100/70 border-zinc-900 shadow-2xs'
+          : 'bg-white border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50/50'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          {/* Company & Location */}
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-1">
+            <span className="font-medium text-zinc-700 truncate">{job.company}</span>
+            <span>•</span>
+            <span className="flex items-center gap-0.5 truncate text-zinc-500">
+              <MapPin className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
+              {job.location}
+            </span>
           </div>
 
-          {/* Bookmark Button */}
-          {(!user || isCandidate) && (
-            <button
-              onClick={handleBookmark}
-              disabled={saving}
-              title={saved ? 'Remove from saved' : 'Save job'}
-              className={`p-2 rounded-xl border transition-all ${
-                saved
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 hover:bg-amber-500/25'
-                  : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-600'
-              }`}
-            >
-              {saved ? (
-                <BookmarkCheck className="w-4 h-4 fill-amber-400" />
-              ) : (
-                <Bookmark className="w-4 h-4" />
-              )}
-            </button>
-          )}
-        </div>
+          {/* Job Title */}
+          <h3 className="text-sm font-semibold text-zinc-900 truncate leading-snug">
+            {job.title}
+          </h3>
 
-        {/* Location & Salary Chips */}
-        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/40">
-            <MapPin className="w-3.5 h-3.5 text-rose-400 mr-1" />
-            {job.location}
-          </span>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-950/40 text-emerald-300 border border-emerald-500/20 font-medium">
-            <DollarSign className="w-3.5 h-3.5 text-emerald-400 mr-0.5" />
-            {formatSalary(job.salaryMin, job.salaryMax)}
-          </span>
-          {job.employmentType && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-blue-950/40 text-blue-300 border border-blue-500/20">
-              <Briefcase className="w-3.5 h-3.5 text-blue-400 mr-1" />
-              {formatEnum(job.employmentType)}
+          {/* Metadata Row: Salary, Employment Type, Level */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <span className="text-xs font-medium text-zinc-800 font-mono bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200">
+              {formatSalary(job.salaryMin, job.salaryMax)}
             </span>
-          )}
-          {job.experienceLevel && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-purple-950/40 text-purple-300 border border-purple-500/20">
-              {formatEnum(job.experienceLevel)}
-            </span>
-          )}
-        </div>
 
-        {/* Short Description */}
-        <p className="text-sm text-slate-400 line-clamp-2 mb-4 leading-relaxed">
-          {job.description}
-        </p>
-
-        {/* Tech Stack Badges */}
-        {job.techStack && job.techStack.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-5">
-            {job.techStack.slice(0, 5).map((tech, idx) => (
-              <span
-                key={idx}
-                className="px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-slate-800/90 text-slate-300 border border-slate-700/50"
-              >
-                {tech}
+            {job.employmentType && (
+              <span className="text-2xs text-zinc-600 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">
+                {formatEnum(job.employmentType)}
               </span>
-            ))}
-            {job.techStack.length > 5 && (
-              <span className="px-2 py-0.5 rounded-md text-[11px] font-mono text-slate-500 bg-slate-800/40">
-                +{job.techStack.length - 5}
+            )}
+
+            {job.experienceLevel && (
+              <span className="text-2xs text-zinc-600 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">
+                {formatEnum(job.experienceLevel)}
               </span>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Footer / Actions */}
-      <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
-        <div className="flex items-center space-x-1.5 text-slate-500">
-          <Calendar className="w-3.5 h-3.5" />
-          <span>{formatTimeAgo(job.createdAt)}</span>
+          {/* Tech Stack Chips */}
+          {job.techStack && job.techStack.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 mt-2.5">
+              {job.techStack.slice(0, 4).map((tech, i) => (
+                <span
+                  key={i}
+                  className="px-1.5 py-0.2 rounded text-2xs font-mono bg-zinc-50 text-zinc-600 border border-zinc-200"
+                >
+                  {tech}
+                </span>
+              ))}
+              {job.techStack.length > 4 && (
+                <span className="text-2xs text-zinc-400 font-mono">
+                  +{job.techStack.length - 4}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Link
-            to={`/jobs/${job._id}`}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors flex items-center gap-1"
-          >
-            <span>Details</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-
-          {isCandidate && onApplyClick && (
+        {/* Right side: Bookmark & Date */}
+        <div className="flex flex-col items-end justify-between self-stretch">
+          {(!user || isCandidate) && (
             <button
-              onClick={() => onApplyClick(job)}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 shadow-md shadow-blue-500/20 transition-all flex items-center gap-1"
+              onClick={handleBookmark}
+              title={saved ? 'Saved' : 'Save job'}
+              className="p-1 rounded text-zinc-400 hover:text-zinc-700 transition-colors"
             >
-              <Sparkles className="w-3 h-3" />
-              <span>Apply</span>
+              {saved ? (
+                <BookmarkCheck className="w-4 h-4 text-zinc-900 fill-zinc-900" strokeWidth={1.5} />
+              ) : (
+                <Bookmark className="w-4 h-4" strokeWidth={1.5} />
+              )}
             </button>
           )}
+
+          <div className="flex items-center gap-1 text-2xs text-zinc-400 mt-auto">
+            <Clock className="w-3 h-3" strokeWidth={1.5} />
+            <span>{formatTimeAgo(job.createdAt)}</span>
+          </div>
         </div>
       </div>
     </div>
