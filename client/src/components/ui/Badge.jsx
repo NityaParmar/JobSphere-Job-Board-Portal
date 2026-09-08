@@ -12,14 +12,14 @@ export const Badge = ({ children, variant = 'default', className = '', size = 's
   };
 
   const sizes = {
-    xs: 'px-1.5 py-0.5 text-2xs',
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs',
+    xs: 'px-1.5 py-0.5 text-2xs rounded',
+    sm: 'px-2 py-0.5 text-xs rounded',
+    md: 'px-2.5 py-1 text-xs rounded-md',
   };
 
   return (
     <span
-      className={`inline-flex items-center font-medium rounded ${sizes[size]} ${variants[variant]} ${className}`}
+      className={`inline-flex items-center font-medium ${sizes[size]} ${variants[variant] || variants.default} ${className}`}
     >
       {children}
     </span>
@@ -61,3 +61,5 @@ export const StatusBadge = ({ status, className = '' }) => {
     </span>
   );
 };
+
+export default Badge;

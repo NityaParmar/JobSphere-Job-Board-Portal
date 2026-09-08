@@ -4,10 +4,8 @@ import {
   Clock,
   Bookmark,
   BookmarkCheck,
-  Building2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Badge } from './ui/Badge';
 
 const formatSalary = (min, max) => {
   if (!min && !max) return 'Competitive';
@@ -55,32 +53,32 @@ export const JobCard = ({ job, isSelected = false, onSelect }) => {
   return (
     <div
       onClick={() => onSelect && onSelect(job)}
-      className={`relative p-4 rounded-lg border transition-all cursor-pointer select-none text-left ${
+      className={`relative p-4 rounded-lg border transition-colors cursor-pointer select-none text-left ${
         isSelected
-          ? 'bg-zinc-100/70 border-zinc-900 shadow-2xs'
+          ? 'bg-zinc-100/80 border-zinc-900 shadow-2xs'
           : 'bg-white border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50/50'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          {/* Company & Location */}
+          {/* Company & Location Badge */}
           <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-1">
             <span className="font-medium text-zinc-700 truncate">{job.company}</span>
             <span>•</span>
-            <span className="flex items-center gap-0.5 truncate text-zinc-500">
+            <span className="inline-flex items-center gap-0.5 truncate text-zinc-500">
               <MapPin className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
               {job.location}
             </span>
           </div>
 
-          {/* Job Title */}
+          {/* Role Title */}
           <h3 className="text-sm font-semibold text-zinc-900 truncate leading-snug">
             {job.title}
           </h3>
 
-          {/* Metadata Row: Salary, Employment Type, Level */}
+          {/* Salary Tag & Employment Info */}
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            <span className="text-xs font-medium text-zinc-800 font-mono bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200">
+            <span className="text-xs font-mono font-medium text-zinc-800 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200">
               {formatSalary(job.salaryMin, job.salaryMax)}
             </span>
 
@@ -117,13 +115,13 @@ export const JobCard = ({ job, isSelected = false, onSelect }) => {
           )}
         </div>
 
-        {/* Right side: Bookmark & Date */}
-        <div className="flex flex-col items-end justify-between self-stretch">
+        {/* Right column: Bookmark & Posted Time */}
+        <div className="flex flex-col items-end justify-between self-stretch flex-shrink-0">
           {(!user || isCandidate) && (
             <button
               onClick={handleBookmark}
               title={saved ? 'Saved' : 'Save job'}
-              className="p-1 rounded text-zinc-400 hover:text-zinc-700 transition-colors"
+              className="p-1 rounded text-zinc-400 hover:text-zinc-700 transition-colors cursor-pointer"
             >
               {saved ? (
                 <BookmarkCheck className="w-4 h-4 text-zinc-900 fill-zinc-900" strokeWidth={1.5} />
@@ -133,7 +131,7 @@ export const JobCard = ({ job, isSelected = false, onSelect }) => {
             </button>
           )}
 
-          <div className="flex items-center gap-1 text-2xs text-zinc-400 mt-auto">
+          <div className="flex items-center gap-1 text-2xs text-zinc-400 mt-auto font-mono">
             <Clock className="w-3 h-3" strokeWidth={1.5} />
             <span>{formatTimeAgo(job.createdAt)}</span>
           </div>

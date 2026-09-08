@@ -4,12 +4,10 @@ import {
   ExternalLink,
   Mail,
   Phone,
-  Calendar,
-  CheckCircle2,
-  FileText,
-  User,
-  MessageSquare,
   Clock,
+  User,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import { applicationApi } from '../api/application.api';
 import { StatusBadge } from './ui/Badge';
@@ -64,14 +62,12 @@ export const ApplicantDrawer = ({ job, isOpen, onClose }) => {
   const handleUpdateStatus = async (appId, newStatus) => {
     try {
       setStatusUpdatingId(appId);
-      const employerNotes = notes[appId] || '';
+      const employerNotes = notes[appId] ?? '';
       const res = await applicationApi.updateStatus(appId, newStatus, employerNotes);
       if (res.success && res.data) {
         setApplicants((prev) =>
           prev.map((a) =>
-            a._id === appId
-              ? { ...a, status: newStatus, employerNotes }
-              : a
+            a._id === appId ? { ...a, status: newStatus, employerNotes } : a
           )
         );
       }
@@ -101,12 +97,14 @@ export const ApplicantDrawer = ({ job, isOpen, onClose }) => {
             <h2 className="text-base font-semibold text-zinc-900 leading-tight">
               {job.title}
             </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">{job.company} • {job.location}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              {job.company} • {job.location}
+            </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+            className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" strokeWidth={1.5} />
           </button>
@@ -160,7 +158,7 @@ export const ApplicantDrawer = ({ job, isOpen, onClose }) => {
                             {candidate.phone}
                           </span>
                         )}
-                        <span className="flex items-center gap-1 text-2xs text-zinc-400">
+                        <span className="flex items-center gap-1 text-2xs text-zinc-400 font-mono">
                           <Clock className="w-3 h-3" strokeWidth={1.5} />
                           {new Date(app.createdAt).toLocaleDateString()}
                         </span>
@@ -169,7 +167,7 @@ export const ApplicantDrawer = ({ job, isOpen, onClose }) => {
 
                     {/* Prominent View Resume Button */}
                     <Button
-                      variant="secondary"
+                      variant="primary"
                       size="xs"
                       icon={ExternalLink}
                       disabled={resumeLoadingId === app._id}
@@ -212,7 +210,7 @@ export const ApplicantDrawer = ({ job, isOpen, onClose }) => {
                     </p>
                   )}
 
-                  {/* Cover Letter */}
+                  {/* Cover Letter Note */}
                   {app.coverLetter && (
                     <div className="text-xs text-zinc-700 bg-zinc-50/70 p-2.5 rounded border border-zinc-200/80">
                       <span className="text-2xs font-semibold uppercase tracking-wider text-zinc-400 block mb-0.5">
@@ -230,7 +228,7 @@ export const ApplicantDrawer = ({ job, isOpen, onClose }) => {
                         value={app.status}
                         disabled={statusUpdatingId === app._id}
                         onChange={(e) => handleUpdateStatus(app._id, e.target.value)}
-                        className="bg-white border border-zinc-200 rounded px-2 py-1 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
+                        className="bg-white border border-zinc-200 rounded px-2 py-1 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 cursor-pointer"
                       >
                         <option value="PENDING">Pending Review</option>
                         <option value="INTERVIEW">Interview</option>
@@ -249,7 +247,7 @@ export const ApplicantDrawer = ({ job, isOpen, onClose }) => {
                         setNotes({ ...notes, [app._id]: e.target.value })
                       }
                       onBlur={(e) => {
-                        if (e.target.value !== app.employerNotes) {
+                        if (e.target.value !== (app.employerNotes || '')) {
                           handleUpdateStatus(app._id, app.status);
                         }
                       }}

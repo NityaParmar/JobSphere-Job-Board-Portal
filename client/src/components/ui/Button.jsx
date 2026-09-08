@@ -12,7 +12,7 @@ export const Button = ({
   ...props
 }) => {
   const base =
-    'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed select-none';
 
   const variants = {
     primary: 'bg-zinc-900 text-white hover:bg-zinc-800 border border-transparent shadow-xs',
@@ -35,7 +35,7 @@ export const Button = ({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${base} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
       {...props}
     >
       {Icon && <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />}
@@ -43,3 +43,5 @@ export const Button = ({
     </button>
   );
 };
+
+export default Button;

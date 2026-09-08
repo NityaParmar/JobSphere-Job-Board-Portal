@@ -1,24 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import {
   Search,
   MapPin,
-  DollarSign,
-  Briefcase,
-  Calendar,
   Clock,
-  Filter,
-  X,
-  Sparkles,
   Share2,
   Bookmark,
   BookmarkCheck,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
-  Building2,
-  Check,
   Users,
+  Check,
+  Briefcase,
 } from 'lucide-react';
 import { jobApi } from '../api/job.api';
 import { useAuth } from '../context/AuthContext';
@@ -28,7 +21,18 @@ import { Button } from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 
-const POPULAR_TECH = ['React', 'Node.js', 'TypeScript', 'Python', 'AWS', 'Docker', 'Go', 'MongoDB'];
+const POPULAR_TECH = [
+  'React',
+  'Node.js',
+  'TypeScript',
+  'Python',
+  'AWS',
+  'Docker',
+  'Go',
+  'MongoDB',
+  'Next.js',
+  'PostgreSQL',
+];
 
 const formatSalary = (min, max) => {
   if (!min && !max) return 'Competitive';
@@ -47,6 +51,7 @@ const formatEnum = (str) => {
 
 export const JobFeedPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { id: routeJobId } = useParams();
   const navigate = useNavigate();
   const { user, isCandidate, isEmployer, isJobSaved, toggleSaveJob } = useAuth();
 
@@ -60,20 +65,36 @@ export const JobFeedPage = () => {
   // Discrete filter inputs
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-  const [minSalary, setMinSalary] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedTech, setSelectedTech] = useState([]);
+  const [locationQuery, setLocationQuery] = useState(searchParams.get('location') || '');
+  const [debouncedLocation, setDebouncedLocation] = useState(locationQuery);
+  const [minSalary, setMinSalary] = useState(searchParams.get('min_salary') || '');
+  const [selectedType, setSelectedType] = useState(searchParams.get('type') || '');
+  const [selectedTech, setSelectedTech] = useState(() => {
+    const techParam = searchParams.get('tech');
+    return techParam ? techParam.split(',') : [];
+  });
+
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
   // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
       setPage(1);
-    }, 350);
+    }, 300);
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  // Debounce location query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedLocation(locationQuery);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [locationQuery]);
 
   const fetchJobs = async () => {
     try {
@@ -84,6 +105,7 @@ export const JobFeedPage = () => {
       };
 
       if (debouncedQuery.trim()) params.search = debouncedQuery.trim();
+      if (debouncedLocation.trim()) params.location = debouncedLocation.trim();
       if (minSalary) params.min_salary = minSalary;
       if (selectedType) params.employment_type = selectedType;
       if (selectedTech.length > 0) params.tech_stack = selectedTech.join(',');
@@ -95,10 +117,10 @@ export const JobFeedPage = () => {
         setTotalPages(res.data.pagination?.pages || res.data.pagination?.totalPages || 1);
         setTotalJobs(res.data.pagination?.total ?? res.data.pagination?.totalJobs ?? 0);
 
-        // Auto-select first job if none selected or selected not in list
+        // Auto-select target job or first job in the returned list
         if (fetchedJobs.length > 0) {
-          const currentId = searchParams.get('jobId');
-          const matched = fetchedJobs.find((j) => j._id === currentId);
+          const targetId = routeJobId || searchParams.get('jobId');
+          const matched = targetId ? fetchedJobs.find((j) => j._id === targetId) : null;
           setSelectedJob(matched || fetchedJobs[0]);
         } else {
           setSelectedJob(null);
@@ -113,7 +135,7 @@ export const JobFeedPage = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [page, debouncedQuery, minSalary, selectedType, selectedTech]);
+  }, [page, debouncedQuery, debouncedLocation, minSalary, selectedType, selectedTech]);
 
   const toggleTech = (tech) => {
     setSelectedTech((prev) =>
@@ -124,6 +146,7 @@ export const JobFeedPage = () => {
 
   const handleClearFilters = () => {
     setSearchQuery('');
+    setLocationQuery('');
     setMinSalary('');
     setSelectedType('');
     setSelectedTech([]);
@@ -131,7 +154,11 @@ export const JobFeedPage = () => {
   };
 
   const hasActiveFilters =
-    debouncedQuery || minSalary || selectedType || selectedTech.length > 0;
+    debouncedQuery ||
+    debouncedLocation ||
+    minSalary ||
+    selectedType ||
+    selectedTech.length > 0;
 
   const isSaved = selectedJob ? isJobSaved(selectedJob._id) : false;
 
@@ -149,6 +176,11 @@ export const JobFeedPage = () => {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const handleSelectJob = (job) => {
+    setSelectedJob(job);
+    setMobileDetailOpen(true);
+  };
+
   return (
     <div className="min-h-[calc(100vh-56px)] flex flex-col bg-zinc-50">
       {/* 1. Inline Compact Filter Row */}
@@ -156,7 +188,7 @@ export const JobFeedPage = () => {
         <div className="max-w-7xl mx-auto space-y-2">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             {/* Search Input */}
-            <div className="flex-1 min-w-[220px]">
+            <div className="flex-1 min-w-[200px]">
               <Input
                 icon={Search}
                 value={searchQuery}
@@ -165,14 +197,24 @@ export const JobFeedPage = () => {
               />
             </div>
 
-            {/* Min Salary Dropdown */}
+            {/* Location Input */}
+            <div className="sm:w-48">
+              <Input
+                icon={MapPin}
+                value={locationQuery}
+                onChange={(e) => setLocationQuery(e.target.value)}
+                placeholder="Location / Remote"
+              />
+            </div>
+
+            {/* Salary Dropdown */}
             <Select
               value={minSalary}
               onChange={(e) => {
                 setMinSalary(e.target.value);
                 setPage(1);
               }}
-              className="text-xs"
+              className="text-xs sm:w-40"
             >
               <option value="">Any Salary</option>
               <option value="50000">$50,000+ / yr</option>
@@ -189,7 +231,7 @@ export const JobFeedPage = () => {
                 setSelectedType(e.target.value);
                 setPage(1);
               }}
-              className="text-xs"
+              className="text-xs sm:w-44"
             >
               <option value="">All Employment Types</option>
               <option value="FULL_TIME">Full-time</option>
@@ -213,7 +255,7 @@ export const JobFeedPage = () => {
 
           {/* Tech Stack Multi-Select Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pt-0.5 pb-1">
-            <span className="text-2xs font-medium text-zinc-400 uppercase tracking-wider mr-1">
+            <span className="text-2xs font-medium text-zinc-400 uppercase tracking-wider mr-1 flex-shrink-0">
               Tech Stack:
             </span>
             {POPULAR_TECH.map((tech) => {
@@ -222,7 +264,7 @@ export const JobFeedPage = () => {
                 <button
                   key={tech}
                   onClick={() => toggleTech(tech)}
-                  className={`px-2 py-0.5 rounded text-2xs font-mono transition-colors border ${
+                  className={`px-2 py-0.5 rounded text-2xs font-mono transition-colors border cursor-pointer flex-shrink-0 ${
                     active
                       ? 'bg-zinc-900 text-white border-zinc-900 font-semibold'
                       : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
@@ -244,11 +286,13 @@ export const JobFeedPage = () => {
             {/* Header / Count */}
             <div className="flex items-center justify-between px-1 text-xs text-zinc-500 font-medium">
               <span>{totalJobs} roles found</span>
-              <span>Page {page} of {totalPages}</span>
+              <span>
+                Page {page} of {totalPages}
+              </span>
             </div>
 
             {loading ? (
-              <div className="py-16 text-center text-xs text-zinc-400 space-y-2">
+              <div className="py-16 text-center text-xs text-zinc-400 space-y-2 bg-white rounded-lg border border-zinc-200">
                 <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-800 rounded-full animate-spin mx-auto" />
                 <p>Loading positions...</p>
               </div>
@@ -256,7 +300,7 @@ export const JobFeedPage = () => {
               <div className="p-8 text-center bg-white border border-zinc-200 rounded-lg space-y-2">
                 <p className="text-xs font-semibold text-zinc-800">No positions match your filter</p>
                 <p className="text-2xs text-zinc-500">
-                  Try broadening your keyword or resetting the minimum salary.
+                  Try broadening your keyword or resetting filter criteria.
                 </p>
                 <Button variant="secondary" size="xs" onClick={handleClearFilters}>
                   Clear Filters
@@ -269,7 +313,7 @@ export const JobFeedPage = () => {
                     key={job._id}
                     job={job}
                     isSelected={selectedJob?._id === job._id}
-                    onSelect={(j) => setSelectedJob(j)}
+                    onSelect={handleSelectJob}
                   />
                 ))}
               </div>
@@ -305,7 +349,7 @@ export const JobFeedPage = () => {
             )}
           </div>
 
-          {/* RIGHT PANE: Sticky Detail View */}
+          {/* RIGHT PANE: Sticky Detail View (Desktop) */}
           <div className="hidden lg:block lg:w-7/12 xl:w-8/12 sticky top-[72px] h-[calc(100vh-90px)] overflow-y-auto bg-white border border-zinc-200 rounded-lg p-6 shadow-2xs">
             {selectedJob ? (
               <div className="space-y-6 text-left">
@@ -316,7 +360,7 @@ export const JobFeedPage = () => {
                       <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-1">
                         <span className="font-medium text-zinc-700">{selectedJob.company}</span>
                         <span>•</span>
-                        <span className="flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 text-zinc-400" strokeWidth={1.5} />
                           {selectedJob.location}
                         </span>
@@ -343,9 +387,13 @@ export const JobFeedPage = () => {
                       <button
                         onClick={handleShare}
                         title="Copy link"
-                        className="p-1.5 rounded-md border border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors"
+                        className="p-1.5 rounded-md border border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors cursor-pointer"
                       >
-                        <Share2 className="w-4 h-4" strokeWidth={1.5} />
+                        {copiedLink ? (
+                          <Check className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />
+                        ) : (
+                          <Share2 className="w-4 h-4" strokeWidth={1.5} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -369,7 +417,7 @@ export const JobFeedPage = () => {
 
                   {/* Primary Apply CTA Bar */}
                   <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-2xs text-zinc-400">
+                    <div className="flex items-center gap-1.5 text-2xs text-zinc-400 font-mono">
                       <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
                       <span>Posted {new Date(selectedJob.createdAt).toLocaleDateString()}</span>
                       {selectedJob.applicationDeadline && (
@@ -378,16 +426,14 @@ export const JobFeedPage = () => {
                     </div>
 
                     {isOwner ? (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          icon={Users}
-                          onClick={() => navigate(`/employer/dashboard?jobId=${selectedJob._id}`)}
-                        >
-                          View Applicants
-                        </Button>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={Users}
+                        onClick={() => navigate(`/employer/dashboard?jobId=${selectedJob._id}`)}
+                      >
+                        View Applicants
+                      </Button>
                     ) : isCandidate ? (
                       <Button
                         size="sm"
@@ -438,13 +484,69 @@ export const JobFeedPage = () => {
                 )}
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-zinc-400">
-                Select a position from the list to view specifications
+              <div className="h-full flex flex-col items-center justify-center text-xs text-zinc-400 space-y-2">
+                <Briefcase className="w-6 h-6 text-zinc-300" strokeWidth={1.5} />
+                <p>Select a position from the list to view specifications</p>
               </div>
             )}
           </div>
         </div>
       </main>
+
+      {/* Mobile Detail Modal (Slide-over for screens < lg) */}
+      {mobileDetailOpen && selectedJob && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-zinc-900/40 backdrop-blur-2xs">
+          <div className="relative w-full max-h-[85vh] overflow-y-auto bg-white rounded-t-xl p-5 text-left border-t border-zinc-200 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between pb-3 border-b border-zinc-100">
+              <div>
+                <span className="text-xs text-zinc-500">{selectedJob.company}</span>
+                <h2 className="text-base font-semibold text-zinc-900">{selectedJob.title}</h2>
+              </div>
+              <button
+                onClick={() => setMobileDetailOpen(false)}
+                className="p-1 rounded text-zinc-400 hover:text-zinc-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-xs font-mono bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+                {formatSalary(selectedJob.salaryMin, selectedJob.salaryMax)}
+              </span>
+              <span className="text-xs bg-zinc-50 px-2 py-0.5 rounded border border-zinc-200">
+                {selectedJob.location}
+              </span>
+            </div>
+
+            <div className="text-xs text-zinc-700 whitespace-pre-line leading-relaxed">
+              {selectedJob.description}
+            </div>
+
+            <div className="pt-3 border-t border-zinc-100 flex items-center justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setMobileDetailOpen(false)}>
+                Close
+              </Button>
+              {isCandidate ? (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {
+                    setMobileDetailOpen(false);
+                    setShowApplyModal(true);
+                  }}
+                >
+                  Apply
+                </Button>
+              ) : !user ? (
+                <Button size="sm" variant="primary" onClick={() => navigate('/login')}>
+                  Sign in to Apply
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Apply Modal */}
       {selectedJob && (

@@ -3,8 +3,9 @@ import {
   X,
   Upload,
   FileText,
-  CheckCircle2,
   AlertCircle,
+  CheckCircle2,
+  Lock,
   Trash2,
 } from 'lucide-react';
 import { applicationApi } from '../api/application.api';
@@ -18,7 +19,7 @@ export const ApplyModal = ({ job, isOpen, onClose, onSuccess }) => {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [appliedSuccess, setAppliedSuccess] = useState(false);
 
   if (!isOpen || !job) return null;
 
@@ -26,17 +27,16 @@ export const ApplyModal = ({ job, isOpen, onClose, onSuccess }) => {
     setError('');
     if (!selectedFile) return;
 
-    const isPdf =
-      selectedFile.type === 'application/pdf' ||
-      selectedFile.name.toLowerCase().endsWith('.pdf');
-
-    if (!isPdf) {
-      setError('Only PDF documents are supported (.pdf format)');
+    if (
+      selectedFile.type !== 'application/pdf' &&
+      !selectedFile.name.toLowerCase().endsWith('.pdf')
+    ) {
+      setError('Only PDF resumes are accepted (.pdf format).');
       return;
     }
 
     if (selectedFile.size > MAX_FILE_SIZE) {
-      setError('File size exceeds the 5MB maximum limit');
+      setError('Resume file size exceeds the 5MB limit.');
       return;
     }
 
@@ -67,7 +67,7 @@ export const ApplyModal = ({ job, isOpen, onClose, onSuccess }) => {
     setError('');
 
     if (!file) {
-      setError('Please attach your resume in PDF format before submitting');
+      setError('Please attach your resume in PDF format.');
       return;
     }
 
@@ -79,162 +79,179 @@ export const ApplyModal = ({ job, isOpen, onClose, onSuccess }) => {
       formData.append('resume', file);
 
       await applicationApi.applyToJob(formData);
-      setSuccess(true);
+      setAppliedSuccess(true);
       if (onSuccess) onSuccess();
     } catch (err) {
-      setError(
+      const msg =
         err.response?.data?.message ||
-          err.message ||
-          'Failed to submit application. Please try again.'
-      );
+        err.message ||
+        'Failed to submit application. Please verify your file and try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-2xs animate-fade-in">
-      <div className="relative w-full max-w-lg bg-white rounded-lg border border-zinc-200 shadow-xl p-6 text-left">
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-zinc-100">
-          <div>
-            <h2 className="text-base font-semibold text-zinc-900">
-              Apply for {job.title}
-            </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              {job.company} • {job.location}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-          >
-            <X className="w-4 h-4" strokeWidth={1.5} />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-2xs animate-fade-in text-left">
+      <div className="relative w-full max-w-lg bg-white rounded-lg border border-zinc-200 shadow-xl p-6 overflow-hidden">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+        >
+          <X className="w-4 h-4" strokeWidth={1.5} />
+        </button>
 
-        {success ? (
-          <div className="py-8 text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-500/20">
-              <CheckCircle2 className="w-5 h-5" strokeWidth={1.5} />
+        {appliedSuccess ? (
+          <div className="text-center py-6 space-y-3">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-500/20">
+              <CheckCircle2 className="w-6 h-6" strokeWidth={1.5} />
             </div>
-            <h3 className="text-sm font-semibold text-zinc-900">
-              Application Transmitted
+            <h3 className="text-base font-semibold text-zinc-900">
+              Application Submitted
             </h3>
-            <p className="text-xs text-zinc-600 max-w-sm mx-auto">
-              Your resume and notes have been securely delivered to the hiring team at{' '}
-              <span className="font-medium text-zinc-900">{job.company}</span>.
+            <p className="text-xs text-zinc-600 max-w-sm mx-auto leading-relaxed">
+              Your resume and submission for{' '}
+              <span className="font-semibold text-zinc-900">{job.title}</span> at{' '}
+              <span className="font-semibold text-zinc-900">{job.company}</span> have been
+              securely transmitted to the hiring team.
             </p>
-            <div className="pt-2">
-              <Button variant="secondary" size="sm" onClick={onClose}>
+            <div className="pt-3">
+              <Button variant="primary" size="sm" onClick={onClose}>
                 Done
               </Button>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="pt-4 space-y-4">
+          <div>
+            {/* Header */}
+            <div className="pb-4 border-b border-zinc-100">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-2xs font-mono font-semibold uppercase text-zinc-500">
+                  {job.company}
+                </span>
+                <span className="text-zinc-300">•</span>
+                <span className="text-2xs font-mono text-zinc-500">{job.location}</span>
+              </div>
+              <h2 className="text-base font-semibold text-zinc-900">
+                Apply for {job.title}
+              </h2>
+              <div className="text-2xs text-zinc-500 flex items-center gap-1 mt-1">
+                <Lock className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+                <span>Encrypted transmission to private cloud object storage</span>
+              </div>
+            </div>
+
             {error && (
-              <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/20 flex items-start gap-2 text-xs text-rose-700">
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+              <div className="mt-4 p-2.5 rounded bg-rose-500/10 border border-rose-500/20 flex items-start gap-2 text-xs text-rose-700">
+                <AlertCircle
+                  className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"
+                  strokeWidth={1.5}
+                />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Purpose-built drag-and-drop file target */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Resume / CV (PDF only, max 5MB) <span className="text-rose-500">*</span>
-              </label>
+            <form onSubmit={handleSubmit} className="pt-4 space-y-4 text-xs">
+              {/* Resume File Dropzone */}
+              <div>
+                <label className="block font-medium text-zinc-700 mb-1.5">
+                  Resume (PDF format, max 5MB) <span className="text-rose-500">*</span>
+                </label>
 
-              {!file ? (
                 <div
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
                   onDragOver={handleDrag}
                   onDrop={handleDrop}
-                  onClick={() => document.getElementById('apply-resume-input').click()}
-                  className={`border-2 border-dashed rounded-md p-6 text-center transition-colors cursor-pointer ${
+                  onClick={() => document.getElementById('resume-file-input').click()}
+                  className={`border border-dashed rounded-lg p-5 text-center transition-colors cursor-pointer ${
                     dragActive
-                      ? 'border-zinc-900 bg-zinc-100/50'
+                      ? 'border-zinc-900 bg-zinc-100'
+                      : file
+                      ? 'border-emerald-500/40 bg-emerald-500/5'
                       : 'border-zinc-300 hover:border-zinc-400 bg-zinc-50/50'
                   }`}
                 >
                   <input
-                    id="apply-resume-input"
+                    id="resume-file-input"
                     type="file"
                     accept=".pdf,application/pdf"
                     className="hidden"
                     onChange={(e) => validateAndSetFile(e.target.files[0])}
                   />
-                  <Upload className="w-5 h-5 text-zinc-400 mx-auto mb-2" strokeWidth={1.5} />
-                  <p className="text-xs font-medium text-zinc-800">
-                    Click to select file or drag & drop PDF
-                  </p>
-                  <p className="text-2xs text-zinc-400 mt-1">Strictly .pdf format up to 5MB</p>
-                </div>
-              ) : (
-                /* Validated File State Card */
-                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded bg-zinc-200/70 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-4 h-4 text-zinc-700" strokeWidth={1.5} />
+
+                  {file ? (
+                    <div className="flex items-center justify-between text-left">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded bg-emerald-500/10 text-emerald-700 flex items-center justify-center flex-shrink-0 border border-emerald-500/20">
+                          <FileText className="w-4 h-4" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-zinc-900 truncate max-w-xs">
+                            {file.name}
+                          </p>
+                          <p className="text-2xs text-zinc-500 font-mono">
+                            {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFile(null);
+                        }}
+                        className="p-1 text-zinc-400 hover:text-rose-600 rounded cursor-pointer"
+                        title="Remove attached file"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                      </button>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-zinc-900 truncate max-w-[280px]">
-                        {file.name}
+                  ) : (
+                    <div className="space-y-1.5">
+                      <Upload className="w-6 h-6 text-zinc-400 mx-auto" strokeWidth={1.5} />
+                      <p className="text-xs text-zinc-700">
+                        <span className="font-semibold underline">Click to choose PDF</span> or drag and drop
                       </p>
-                      <p className="text-2xs text-zinc-500">
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB • PDF Document
-                      </p>
+                      <p className="text-2xs text-zinc-400 font-mono">Standard PDF documents up to 5MB</p>
                     </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setFile(null)}
-                    title="Remove file"
-                    className="p-1 rounded text-zinc-400 hover:text-rose-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                  </button>
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Note to Hiring Team */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1.5">
-                Note / Cover Letter (Optional)
-              </label>
-              <textarea
-                rows="3"
-                value={coverLetter}
-                onChange={(e) => setCoverLetter(e.target.value)}
-                placeholder="Highlight relevant experience, availability, or portfolio links..."
-                className="w-full bg-white border border-zinc-200 rounded-md p-2.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 resize-none"
-              />
-            </div>
+              {/* Cover Letter */}
+              <div>
+                <label className="block font-medium text-zinc-700 mb-1">
+                  Candidate Note / Cover Letter (Optional)
+                </label>
+                <textarea
+                  rows="3"
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                  placeholder="Summarize relevant experience, availability, or links to portfolio/code..."
+                  className="w-full bg-white border border-zinc-200 rounded-md p-2.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 resize-none leading-relaxed"
+                />
+              </div>
 
-            {/* Footer buttons */}
-            <div className="pt-2 flex items-center justify-end gap-2 border-t border-zinc-100">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onClose}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                disabled={loading || !file}
-              >
-                {loading ? 'Submitting...' : 'Submit Application'}
-              </Button>
-            </div>
-          </form>
+              {/* Modal Actions */}
+              <div className="pt-3 border-t border-zinc-100 flex items-center justify-end gap-2">
+                <Button variant="secondary" size="sm" onClick={onClose} disabled={loading}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="submit"
+                  disabled={loading || !file}
+                >
+                  {loading ? 'Transmitting...' : 'Submit Application'}
+                </Button>
+              </div>
+            </form>
+          </div>
         )}
       </div>
     </div>

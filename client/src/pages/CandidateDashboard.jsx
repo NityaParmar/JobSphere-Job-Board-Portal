@@ -7,17 +7,27 @@ import {
   ExternalLink,
   Building2,
   Calendar,
-  CheckCircle2,
   AlertCircle,
   Plus,
   X,
-  Clock,
-  ArrowRight,
+  MapPin,
+  CheckCircle2,
+  Briefcase,
+  ArrowUpRight,
 } from 'lucide-react';
 import { applicationApi } from '../api/application.api';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
-import { StatusBadge } from '../components/ui/Badge';
+import { StatusBadge, Badge } from '../components/ui/Badge';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '../components/ui/Table';
+import LoadingSpinner from '../components/LoadingSpinner';
 import ApplyModal from '../components/ApplyModal';
 
 export const CandidateDashboard = () => {
@@ -76,10 +86,13 @@ export const CandidateDashboard = () => {
       if (res.success && res.data && res.data.resumeUrl) {
         window.open(res.data.resumeUrl, '_blank', 'noopener,noreferrer');
       } else {
-        alert('Could not generate pre-signed URL for resume.');
+        alert('Could not retrieve pre-signed URL for resume.');
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to retrieve resume.');
+      alert(
+        err.response?.data?.message ||
+          'Failed to load resume. In development, valid AWS S3 credentials are required to generate presigned URLs.'
+      );
     } finally {
       setResumeLoadingId(null);
     }
@@ -87,8 +100,9 @@ export const CandidateDashboard = () => {
 
   const handleAddSkill = (e) => {
     e.preventDefault();
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()]);
+    const trimmed = newSkill.trim();
+    if (trimmed && !skills.includes(trimmed)) {
+      setSkills([...skills, trimmed]);
       setNewSkill('');
     }
   };
@@ -113,177 +127,248 @@ export const CandidateDashboard = () => {
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
     } catch (err) {
-      setProfileError(err.response?.data?.message || err.message || 'Failed to update profile.');
+      setProfileError(
+        err.response?.data?.message || err.message || 'Failed to update profile.'
+      );
     } finally {
       setProfileSaving(false);
     }
   };
 
+  // Metric counts
+  const pendingCount = applications.filter((a) => a.status === 'PENDING').length;
+  const interviewCount = applications.filter((a) => a.status === 'INTERVIEW').length;
+  const acceptedCount = applications.filter((a) => a.status === 'ACCEPTED').length;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 text-left">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-left">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
-            Candidate Hub
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-2xs font-mono font-semibold uppercase tracking-wider text-zinc-500">
+              Candidate Portal
+            </span>
+            <span className="text-zinc-300">•</span>
+            <span className="text-2xs text-zinc-500 font-mono">
+              {user?.email || 'Authenticated'}
+            </span>
+          </div>
+          <h1 className="text-xl font-bold text-zinc-900 tracking-tight">
+            Application Tracker & Profile
           </h1>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Manage your submitted applications, review saved positions, and keep your profile qualifications current.
+            Monitor requisition progression, review recruiter feedback, and maintain your professional qualifications.
           </p>
         </div>
 
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => (window.location.href = '/jobs')}
-        >
-          Explore More Roles
-        </Button>
+        <Link to="/jobs">
+          <Button variant="outline" size="sm" icon={Briefcase}>
+            Browse Jobs
+          </Button>
+        </Link>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-zinc-200 pb-0.5">
+      {/* Metrics Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-6">
+        <div className="p-4 rounded-lg bg-white border border-zinc-200 shadow-2xs">
+          <span className="text-2xs font-mono uppercase font-semibold text-zinc-500">
+            Total Applications
+          </span>
+          <div className="text-xl font-bold text-zinc-900 font-mono mt-1">
+            {applications.length}
+          </div>
+        </div>
+
+        <div className="p-4 rounded-lg bg-white border border-zinc-200 shadow-2xs">
+          <span className="text-2xs font-mono uppercase font-semibold text-amber-700 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            Under Review
+          </span>
+          <div className="text-xl font-bold text-zinc-900 font-mono mt-1">
+            {pendingCount}
+          </div>
+        </div>
+
+        <div className="p-4 rounded-lg bg-white border border-zinc-200 shadow-2xs">
+          <span className="text-2xs font-mono uppercase font-semibold text-sky-700 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+            Interviews
+          </span>
+          <div className="text-xl font-bold text-zinc-900 font-mono mt-1">
+            {interviewCount}
+          </div>
+        </div>
+
+        <div className="p-4 rounded-lg bg-white border border-zinc-200 shadow-2xs">
+          <span className="text-2xs font-mono uppercase font-semibold text-emerald-700 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Offers / Accepted
+          </span>
+          <div className="text-xl font-bold text-zinc-900 font-mono mt-1">
+            {acceptedCount}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs Filter Bar */}
+      <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-md border border-zinc-200 w-fit mb-6">
         <button
           onClick={() => setSearchParams({ tab: 'applications' })}
-          className={`pb-2 px-3 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
             currentTab === 'applications'
-              ? 'border-zinc-900 text-zinc-900 font-semibold'
-              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+              ? 'bg-white text-zinc-900 shadow-2xs font-semibold'
+              : 'text-zinc-600 hover:text-zinc-900'
           }`}
         >
-          <FileText className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
-          <span>My Applications</span>
-          <span className="px-1.5 py-0.2 rounded-full text-2xs bg-zinc-100 text-zinc-600 font-mono">
-            {applications.length}
-          </span>
+          <FileText className="w-3.5 h-3.5" strokeWidth={1.5} />
+          <span>Applications ({applications.length})</span>
         </button>
 
         <button
           onClick={() => setSearchParams({ tab: 'saved' })}
-          className={`pb-2 px-3 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
             currentTab === 'saved'
-              ? 'border-zinc-900 text-zinc-900 font-semibold'
-              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+              ? 'bg-white text-zinc-900 shadow-2xs font-semibold'
+              : 'text-zinc-600 hover:text-zinc-900'
           }`}
         >
-          <Bookmark className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
-          <span>Saved Jobs</span>
-          <span className="px-1.5 py-0.2 rounded-full text-2xs bg-zinc-100 text-zinc-600 font-mono">
-            {user?.savedJobs?.length || 0}
-          </span>
+          <Bookmark className="w-3.5 h-3.5" strokeWidth={1.5} />
+          <span>Saved Jobs ({user?.savedJobs?.length || 0})</span>
         </button>
 
         <button
           onClick={() => setSearchParams({ tab: 'profile' })}
-          className={`pb-2 px-3 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
             currentTab === 'profile'
-              ? 'border-zinc-900 text-zinc-900 font-semibold'
-              : 'border-transparent text-zinc-500 hover:text-zinc-800'
+              ? 'bg-white text-zinc-900 shadow-2xs font-semibold'
+              : 'text-zinc-600 hover:text-zinc-900'
           }`}
         >
-          <User className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
-          <span>Profile & Skills</span>
+          <User className="w-3.5 h-3.5" strokeWidth={1.5} />
+          <span>Candidate Profile</span>
         </button>
       </div>
 
       {/* TAB 1: APPLICATIONS */}
       {currentTab === 'applications' && (
-        <div className="space-y-3">
+        <div>
           {loadingApps ? (
-            <div className="py-20 text-center text-xs text-zinc-400 space-y-2">
-              <div className="w-5 h-5 border-2 border-zinc-300 border-t-zinc-800 rounded-full animate-spin mx-auto" />
-              <p>Loading application history...</p>
+            <div className="py-24 text-center">
+              <LoadingSpinner size="md" text="Loading application records..." />
             </div>
           ) : applications.length === 0 ? (
-            <div className="py-16 text-center border border-dashed border-zinc-200 bg-white rounded-lg p-8 space-y-2">
-              <FileText className="w-8 h-8 text-zinc-300 mx-auto" strokeWidth={1.5} />
-              <h3 className="text-xs font-semibold text-zinc-800">No applications submitted yet</h3>
-              <p className="text-2xs text-zinc-500 max-w-xs mx-auto">
-                Explore open positions and submit your resume in one click.
+            <div className="py-16 px-4 text-center bg-white rounded-lg border border-dashed border-zinc-200">
+              <FileText className="w-8 h-8 text-zinc-300 mx-auto mb-3" strokeWidth={1.5} />
+              <h3 className="text-sm font-semibold text-zinc-800">No applications submitted yet</h3>
+              <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1 mb-4">
+                Explore engineering opportunities on the job feed and apply directly with your PDF resume.
               </p>
-              <div className="pt-2">
-                <Button size="xs" variant="primary" onClick={() => (window.location.href = '/jobs')}>
-                  Find Jobs
+              <Link to="/jobs">
+                <Button variant="primary" size="sm">
+                  Explore Open Requisitions
                 </Button>
-              </div>
+              </Link>
             </div>
           ) : (
-            <div className="space-y-3">
-              {applications.map((app) => {
-                const job = app.job;
-                return (
-                  <div
-                    key={app._id}
-                    className="p-4 rounded-lg border border-zinc-200 bg-white flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs hover:border-zinc-300 transition-colors"
-                  >
-                    <div className="space-y-1.5 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <StatusBadge status={app.status} />
-                        <span className="text-2xs text-zinc-400 font-mono">
-                          Applied {new Date(app.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
+            <Table>
+              <TableHeader>
+                <TableRow hover={false}>
+                  <TableHead>Role & Company</TableHead>
+                  <TableHead>Current Status</TableHead>
+                  <TableHead>Resume / Cover</TableHead>
+                  <TableHead>Hiring Feedback</TableHead>
+                  <TableHead>Submitted</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {applications.map((app) => {
+                  const job = app.job;
 
-                      <div>
-                        {job ? (
-                          <Link
-                            to={`/jobs?jobId=${job._id}`}
-                            className="text-sm font-semibold text-zinc-900 hover:underline block truncate"
-                          >
-                            {job.title}
-                          </Link>
+                  return (
+                    <TableRow key={app._id}>
+                      {/* Job Title & Company */}
+                      <TableCell>
+                        <div className="space-y-0.5">
+                          {job ? (
+                            <Link
+                              to={`/jobs/${job._id}`}
+                              className="font-semibold text-zinc-900 hover:underline inline-flex items-center gap-1"
+                            >
+                              <span>{job.title}</span>
+                              <ArrowUpRight className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+                            </Link>
+                          ) : (
+                            <span className="text-zinc-500 italic">Requisition Archived</span>
+                          )}
+                          <div className="text-2xs text-zinc-500 flex items-center gap-1">
+                            <Building2 className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+                            <span>{job?.company || 'Company'}</span>
+                            {job?.location && (
+                              <>
+                                <span>•</span>
+                                <span>{job.location}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        <StatusBadge status={app.status} />
+                      </TableCell>
+
+                      {/* Resume link */}
+                      <TableCell>
+                        <button
+                          onClick={() => handleViewResume(app._id)}
+                          disabled={resumeLoadingId === app._id}
+                          className="inline-flex items-center gap-1 text-2xs font-mono text-zinc-700 hover:text-zinc-900 underline cursor-pointer"
+                        >
+                          <ExternalLink className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+                          <span>
+                            {resumeLoadingId === app._id ? 'Generating link...' : 'S3 Resume (PDF)'}
+                          </span>
+                        </button>
+                      </TableCell>
+
+                      {/* Notes / Feedback */}
+                      <TableCell>
+                        {app.employerNotes ? (
+                          <div className="text-2xs text-zinc-700 bg-zinc-50 p-1.5 rounded border border-zinc-200 max-w-xs">
+                            {app.employerNotes}
+                          </div>
                         ) : (
-                          <span className="text-sm font-semibold text-zinc-500 italic">
-                            Position No Longer Listed
+                          <span className="text-2xs text-zinc-400 font-mono italic">
+                            No notes yet
                           </span>
                         )}
-                        <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
-                          <span>{job?.company}</span>
-                          {job?.location && (
-                            <>
-                              <span>•</span>
-                              <span>{job.location}</span>
-                            </>
-                          )}
-                        </p>
-                      </div>
+                      </TableCell>
 
-                      {app.employerNotes && (
-                        <div className="p-2 rounded bg-zinc-50 border border-zinc-200 text-xs text-zinc-700 max-w-xl">
-                          <span className="font-semibold text-zinc-500 block text-2xs uppercase tracking-wider mb-0.5">
-                            Employer Feedback:
-                          </span>
-                          <p>{app.employerNotes}</p>
-                        </div>
-                      )}
-                    </div>
+                      {/* Submitted Date */}
+                      <TableCell>
+                        <span className="text-2xs font-mono text-zinc-500">
+                          {new Date(app.createdAt).toLocaleDateString()}
+                        </span>
+                      </TableCell>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 self-start md:self-center flex-shrink-0">
-                      <Button
-                        size="xs"
-                        variant="secondary"
-                        icon={ExternalLink}
-                        disabled={resumeLoadingId === app._id}
-                        onClick={() => handleViewResume(app._id)}
-                      >
-                        {resumeLoadingId === app._id ? 'Opening...' : 'View Resume'}
-                      </Button>
-
-                      {job && (
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          onClick={() => (window.location.href = `/jobs?jobId=${job._id}`)}
-                        >
-                          View Job
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      {/* Action */}
+                      <TableCell className="text-right">
+                        {job && (
+                          <Link to={`/jobs/${job._id}`}>
+                            <Button variant="ghost" size="xs">
+                              View Post
+                            </Button>
+                          </Link>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </div>
       )}
@@ -292,15 +377,20 @@ export const CandidateDashboard = () => {
       {currentTab === 'saved' && (
         <div>
           {!user?.savedJobs || user.savedJobs.length === 0 ? (
-            <div className="py-16 text-center border border-dashed border-zinc-200 bg-white rounded-lg p-8 space-y-2">
-              <Bookmark className="w-8 h-8 text-zinc-300 mx-auto" strokeWidth={1.5} />
-              <h3 className="text-xs font-semibold text-zinc-800">No saved jobs</h3>
-              <p className="text-2xs text-zinc-500 max-w-xs mx-auto">
-                Bookmark roles from the job feed to review or apply to later.
+            <div className="py-16 px-4 text-center bg-white rounded-lg border border-dashed border-zinc-200">
+              <Bookmark className="w-8 h-8 text-zinc-300 mx-auto mb-3" strokeWidth={1.5} />
+              <h3 className="text-sm font-semibold text-zinc-800">No saved requisitions</h3>
+              <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1 mb-4">
+                Bookmark interesting roles from the job explorer to track compensation and submit applications later.
               </p>
+              <Link to="/jobs">
+                <Button variant="primary" size="sm">
+                  Browse Opportunities
+                </Button>
+              </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {user.savedJobs.map((item) => {
                 const job = typeof item === 'object' ? item : null;
                 if (!job) return null;
@@ -308,39 +398,64 @@ export const CandidateDashboard = () => {
                 return (
                   <div
                     key={job._id}
-                    className="p-4 rounded-lg border border-zinc-200 bg-white flex flex-col justify-between shadow-2xs hover:border-zinc-300 transition-colors"
+                    className="p-5 rounded-lg border border-zinc-200 bg-white shadow-2xs flex flex-col justify-between space-y-4 hover:border-zinc-300 transition-colors"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <span className="text-xs text-zinc-500 font-medium truncate">
+                        <span className="text-2xs font-mono uppercase font-semibold text-zinc-500">
                           {job.company}
                         </span>
                         <button
                           onClick={() => toggleSaveJob(job._id)}
-                          className="text-2xs text-zinc-400 hover:text-rose-600 transition-colors"
+                          className="text-2xs text-rose-600 hover:underline cursor-pointer"
                         >
                           Remove
                         </button>
                       </div>
 
-                      <h4 className="text-sm font-semibold text-zinc-900 line-clamp-1">
-                        {job.title}
-                      </h4>
-                      <p className="text-2xs text-zinc-500 mt-1 line-clamp-2">
+                      <Link to={`/jobs/${job._id}`}>
+                        <h3 className="text-sm font-semibold text-zinc-900 hover:underline">
+                          {job.title}
+                        </h3>
+                      </Link>
+
+                      <div className="text-2xs text-zinc-500 flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3 text-zinc-400" strokeWidth={1.5} />
+                        <span>{job.location}</span>
+                        <span>•</span>
+                        <span>{job.employmentType?.replace('_', ' ')}</span>
+                      </div>
+
+                      <p className="text-xs text-zinc-600 line-clamp-2 mt-2 leading-relaxed">
                         {job.description}
                       </p>
+
+                      {job.techStack && job.techStack.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-2">
+                          {job.techStack.slice(0, 3).map((tech, i) => (
+                            <span
+                              key={i}
+                              className="px-1.5 py-0.2 rounded text-2xs font-mono bg-zinc-100 text-zinc-600 border border-zinc-200"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="pt-3 border-t border-zinc-100 mt-3 flex items-center justify-between">
-                      <span className="text-xs font-mono font-medium text-zinc-800">
-                        ${(job.salaryMin / 1000).toFixed(0)}k - ${(job.salaryMax / 1000).toFixed(0)}k
+                    <div className="pt-3 border-t border-zinc-100 flex items-center justify-between">
+                      <span className="text-xs font-mono font-medium text-zinc-900">
+                        ${Math.round((job.salaryMin || 0) / 1000)}k – $
+                        {Math.round((job.salaryMax || 0) / 1000)}k
                       </span>
+
                       <Button
-                        size="xs"
                         variant="primary"
+                        size="xs"
                         onClick={() => setApplyJobTarget(job)}
                       >
-                        Apply Now
+                        Apply
                       </Button>
                     </div>
                   </div>
@@ -353,26 +468,24 @@ export const CandidateDashboard = () => {
 
       {/* TAB 3: PROFILE */}
       {currentTab === 'profile' && (
-        <div className="max-w-xl bg-white border border-zinc-200 rounded-lg p-6 shadow-2xs space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Candidate Profile & Qualifications
-            </h2>
+        <div className="max-w-2xl bg-white rounded-lg border border-zinc-200 shadow-2xs p-6">
+          <div className="pb-4 border-b border-zinc-100 mb-4">
+            <h2 className="text-sm font-semibold text-zinc-900">Candidate Profile</h2>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Hiring managers view your headline and skills alongside your uploaded PDF resume.
+              Screening teams use your profile information and verified skills to evaluate requisitions.
             </p>
           </div>
 
           {profileSuccess && (
-            <div className="p-2.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-700">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />
+            <div className="mb-4 p-2.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-800">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" strokeWidth={1.5} />
               <span>Profile updated successfully</span>
             </div>
           )}
 
           {profileError && (
-            <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/20 flex items-center gap-2 text-xs text-rose-700">
-              <AlertCircle className="w-4 h-4 text-rose-600" strokeWidth={1.5} />
+            <div className="mb-4 p-2.5 rounded bg-rose-500/10 border border-rose-500/20 flex items-center gap-2 text-xs text-rose-700">
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" strokeWidth={1.5} />
               <span>{profileError}</span>
             </div>
           )}
@@ -390,35 +503,37 @@ export const CandidateDashboard = () => {
             </div>
 
             <div>
-              <label className="block font-medium text-zinc-700 mb-1">Phone Number</label>
+              <label className="block font-medium text-zinc-700 mb-1">
+                Phone Number (Optional)
+              </label>
               <input
                 type="tel"
                 value={profilePhone}
                 onChange={(e) => setProfilePhone(e.target.value)}
-                placeholder="+1 (555) 000-0000"
+                placeholder="+1 (555) 012-3456"
                 className="w-full bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
               />
             </div>
 
             <div>
               <label className="block font-medium text-zinc-700 mb-1">
-                Headline / Professional Bio
+                Professional Bio / Summary
               </label>
               <textarea
                 rows="3"
                 value={profileBio}
                 onChange={(e) => setProfileBio(e.target.value)}
-                placeholder="Brief summary of your specialization and years of experience..."
+                placeholder="Staff software engineer specialized in distributed systems and cloud infrastructure..."
                 className="w-full bg-white border border-zinc-200 rounded-md p-2.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 resize-none leading-relaxed"
               />
             </div>
 
-            {/* Skills */}
+            {/* Skills Tags */}
             <div>
               <label className="block font-medium text-zinc-700 mb-1">
-                Technical Skills & Tools
+                Skills & Technologies
               </label>
-              <div className="flex gap-2 mb-1.5">
+              <div className="flex gap-2 mb-2">
                 <input
                   type="text"
                   value={newSkill}
@@ -429,17 +544,23 @@ export const CandidateDashboard = () => {
                       handleAddSkill(e);
                     }
                   }}
-                  placeholder="Type skill (e.g. Node.js) and press Enter"
+                  placeholder="e.g. React, Node.js, Go, Kubernetes"
                   className="flex-1 bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                 />
-                <Button size="xs" variant="secondary" onClick={handleAddSkill} icon={Plus}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="xs"
+                  onClick={handleAddSkill}
+                  icon={Plus}
+                >
                   Add
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-1 p-2 rounded-md bg-zinc-50 border border-zinc-200 min-h-[32px]">
+              <div className="flex flex-wrap gap-1 p-2 rounded-md bg-zinc-50 border border-zinc-200 min-h-[34px]">
                 {skills.length === 0 ? (
-                  <span className="text-2xs text-zinc-400 italic">No skills listed yet</span>
+                  <span className="text-2xs text-zinc-400 italic">No skills added yet</span>
                 ) : (
                   skills.map((skill, idx) => (
                     <span
@@ -450,7 +571,7 @@ export const CandidateDashboard = () => {
                       <button
                         type="button"
                         onClick={() => handleRemoveSkill(skill)}
-                        className="text-zinc-400 hover:text-rose-600"
+                        className="text-zinc-400 hover:text-rose-600 cursor-pointer"
                       >
                         ×
                       </button>
@@ -460,8 +581,8 @@ export const CandidateDashboard = () => {
               </div>
             </div>
 
-            <div className="pt-2">
-              <Button type="submit" variant="primary" size="sm" disabled={profileSaving}>
+            <div className="pt-3 border-t border-zinc-100 flex justify-end">
+              <Button variant="primary" size="sm" type="submit" disabled={profileSaving}>
                 {profileSaving ? 'Saving...' : 'Save Profile Changes'}
               </Button>
             </div>
@@ -475,7 +596,9 @@ export const CandidateDashboard = () => {
           job={applyJobTarget}
           isOpen={!!applyJobTarget}
           onClose={() => setApplyJobTarget(null)}
-          onSuccess={() => fetchApplications()}
+          onSuccess={() => {
+            fetchApplications();
+          }}
         />
       )}
     </div>

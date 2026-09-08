@@ -157,7 +157,7 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit, onSuccess }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+            className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
@@ -223,7 +223,7 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit, onSuccess }) => {
               <select
                 value={formData.employmentType}
                 onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
-                className="w-full bg-white border border-zinc-200 rounded-md px-2.5 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
+                className="w-full bg-white border border-zinc-200 rounded-md px-2.5 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 cursor-pointer"
               >
                 {EMPLOYMENT_TYPES.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -240,7 +240,7 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit, onSuccess }) => {
               <select
                 value={formData.experienceLevel}
                 onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
-                className="w-full bg-white border border-zinc-200 rounded-md px-2.5 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
+                className="w-full bg-white border border-zinc-200 rounded-md px-2.5 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 cursor-pointer"
               >
                 {EXPERIENCE_LEVELS.map((level) => (
                   <option key={level.value} value={level.value}>
@@ -322,7 +322,7 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit, onSuccess }) => {
                     <button
                       type="button"
                       onClick={() => handleRemoveTech(tech)}
-                      className="text-zinc-400 hover:text-rose-600"
+                      className="text-zinc-400 hover:text-rose-600 cursor-pointer"
                     >
                       ×
                     </button>
@@ -359,7 +359,7 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit, onSuccess }) => {
                 onChange={(e) =>
                   setFormData({ ...formData, applicationDeadline: e.target.value })
                 }
-                className="w-full bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
+                className="w-full bg-white border border-zinc-200 rounded-md px-3 py-1.5 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900 cursor-pointer"
               />
             </div>
 

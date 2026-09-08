@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,7 +12,7 @@ import RegisterPage from './pages/RegisterPage';
 import CandidateDashboard from './pages/CandidateDashboard';
 import EmployerDashboard from './pages/EmployerDashboard';
 
-// 404 Fallback
+// 404 Component
 const NotFoundPage = () => (
   <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4 space-y-3">
     <span className="text-2xs font-mono text-zinc-400 uppercase tracking-widest">404 Error</span>
@@ -20,12 +20,12 @@ const NotFoundPage = () => (
     <p className="text-xs text-zinc-500 max-w-sm">
       The requested route does not exist or you do not have permission to view it.
     </p>
-    <a
-      href="/jobs"
+    <Link
+      to="/jobs"
       className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
     >
       Return to Jobs
-    </a>
+    </Link>
   </div>
 );
 
@@ -46,7 +46,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
-              {/* Candidate Dashboard */}
+              {/* Protected Candidate Routes */}
               <Route
                 path="/candidate/dashboard"
                 element={
@@ -56,7 +56,7 @@ function App() {
                 }
               />
 
-              {/* Employer Dashboard */}
+              {/* Protected Employer Routes */}
               <Route
                 path="/employer/dashboard"
                 element={

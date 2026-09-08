@@ -11,10 +11,8 @@ import {
   X,
   Building,
   User,
-  ExternalLink,
 } from 'lucide-react';
 import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
 
 export const Navbar = () => {
   const { user, isAuthenticated, isEmployer, isCandidate, logout } = useAuth();
@@ -60,7 +58,9 @@ export const Navbar = () => {
               <Link
                 to="/jobs"
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  isActive('/jobs') && !location.pathname.startsWith('/candidate') && !location.pathname.startsWith('/employer')
+                  isActive('/jobs') &&
+                  !location.pathname.startsWith('/candidate') &&
+                  !location.pathname.startsWith('/employer')
                     ? 'bg-zinc-100 text-zinc-900'
                     : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                 }`}
@@ -74,7 +74,8 @@ export const Navbar = () => {
                   <Link
                     to="/candidate/dashboard?tab=applications"
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      location.pathname.startsWith('/candidate') && (location.search.includes('tab=applications') || !location.search)
+                      location.pathname.startsWith('/candidate') &&
+                      (location.search.includes('tab=applications') || !location.search)
                         ? 'bg-zinc-100 text-zinc-900'
                         : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                     }`}
@@ -86,7 +87,8 @@ export const Navbar = () => {
                   <Link
                     to="/candidate/dashboard?tab=saved"
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      location.pathname.startsWith('/candidate') && location.search.includes('tab=saved')
+                      location.pathname.startsWith('/candidate') &&
+                      location.search.includes('tab=saved')
                         ? 'bg-zinc-100 text-zinc-900'
                         : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                     }`}
@@ -103,7 +105,9 @@ export const Navbar = () => {
                   <Link
                     to="/employer/dashboard"
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      location.pathname.startsWith('/employer') && !location.search.includes('tab=profile')
+                      location.pathname.startsWith('/employer') &&
+                      !location.search.includes('tab=profile') &&
+                      !location.search.includes('action=post')
                         ? 'bg-zinc-100 text-zinc-900'
                         : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                     }`}
@@ -113,9 +117,23 @@ export const Navbar = () => {
                   </Link>
 
                   <Link
+                    to="/employer/dashboard?action=post"
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      location.pathname.startsWith('/employer') &&
+                      location.search.includes('action=post')
+                        ? 'bg-zinc-100 text-zinc-900'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <Plus className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
+                    <span>Post a Job</span>
+                  </Link>
+
+                  <Link
                     to="/employer/dashboard?tab=profile"
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                      location.pathname.startsWith('/employer') && location.search.includes('tab=profile')
+                      location.pathname.startsWith('/employer') &&
+                      location.search.includes('tab=profile')
                         ? 'bg-zinc-100 text-zinc-900'
                         : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                     }`}
@@ -162,7 +180,7 @@ export const Navbar = () => {
                   <button
                     onClick={handleLogout}
                     title="Sign Out"
-                    className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                    className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" strokeWidth={1.5} />
                   </button>
@@ -251,6 +269,13 @@ export const Navbar = () => {
                     className="block px-2.5 py-1.5 rounded text-xs font-medium text-zinc-900 font-semibold"
                   >
                     + Post a Job
+                  </Link>
+                  <Link
+                    to="/employer/dashboard?tab=profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-2.5 py-1.5 rounded text-xs font-medium text-zinc-800 hover:bg-zinc-100"
+                  >
+                    Company Profile
                   </Link>
                 </>
               )}
