@@ -11,6 +11,7 @@ client/dist/
 .env
 .env.*
 !.env.example
+!client/.env.production
 *.env
 
 # Logs
