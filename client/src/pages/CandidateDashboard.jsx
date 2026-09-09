@@ -54,7 +54,7 @@ export const CandidateDashboard = () => {
 
   const fetchApplications = async () => {
     try {
-      setLoadingApps(true);
+      if (applications.length === 0) setLoadingApps(true);
       const res = await applicationApi.getMyApplications();
       if (res.success && res.data) {
         setApplications(res.data.applications || []);

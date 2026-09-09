@@ -118,10 +118,25 @@ export const JobFeedPage = () => {
         setTotalJobs(res.data.pagination?.total ?? res.data.pagination?.totalJobs ?? 0);
 
         // Auto-select target job or first job in the returned list
-        if (fetchedJobs.length > 0) {
-          const targetId = routeJobId || searchParams.get('jobId');
-          const matched = targetId ? fetchedJobs.find((j) => j._id === targetId) : null;
-          setSelectedJob(matched || fetchedJobs[0]);
+        const targetId = routeJobId || searchParams.get('jobId');
+        if (targetId) {
+          const matched = fetchedJobs.find((j) => j._id === targetId);
+          if (matched) {
+            setSelectedJob(matched);
+          } else {
+            try {
+              const singleRes = await jobApi.getJobById(targetId);
+              if (singleRes.success && singleRes.data?.job) {
+                setSelectedJob(singleRes.data.job);
+              } else if (fetchedJobs.length > 0) {
+                setSelectedJob(fetchedJobs[0]);
+              }
+            } catch {
+              if (fetchedJobs.length > 0) setSelectedJob(fetchedJobs[0]);
+            }
+          }
+        } else if (fetchedJobs.length > 0) {
+          setSelectedJob(fetchedJobs[0]);
         } else {
           setSelectedJob(null);
         }
@@ -450,6 +465,10 @@ export const JobFeedPage = () => {
                       >
                         Sign in to Apply
                       </Button>
+                    ) : isEmployer ? (
+                      <span className="text-2xs font-mono text-zinc-400 bg-zinc-50 border border-zinc-200 px-2.5 py-1.5 rounded">
+                        Employer Account (Candidate application disabled)
+                      </span>
                     ) : null}
                   </div>
                 </div>
