@@ -58,6 +58,16 @@ const errorHandler = (err, _req, res, _next) => {
     error = new ApiError(400, 'Unexpected file field');
   }
 
+  // -------------------------------------------------------------------------
+  // Supabase Storage: Upload / signed-URL / delete failures
+  // -------------------------------------------------------------------------
+  if (err.message && err.message.startsWith('Supabase Storage')) {
+    error = new ApiError(502, err.message);
+  }
+  if (err.message && err.message.startsWith('Supabase signed URL')) {
+    error = new ApiError(502, err.message);
+  }
+
   // Log the full error in development
   if (process.env.NODE_ENV !== 'production') {
     console.error('[Error Handler]', err.stack || err.message);
