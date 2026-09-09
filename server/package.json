@@ -6,7 +6,12 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "test": "node test_jobs.js && node test_auth.js && node test_e2e_portal.js && node test_applications.js",
+    "test:auth": "node test_auth.js",
+    "test:jobs": "node test_jobs.js",
+    "test:e2e": "node test_e2e_portal.js",
+    "test:storage": "node test_applications.js"
   },
   "keywords": [],
   "license": "ISC",
