@@ -1,0 +1,12 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /jobs
+Allow: /login
+Allow: /register
+
+# Restrict authenticated application routes from search indexers
+Disallow: /dashboard/
+Disallow: /applications/
+
+Sitemap: https://jobsphere-job-board-portal.vercel.app/sitemap.xml
