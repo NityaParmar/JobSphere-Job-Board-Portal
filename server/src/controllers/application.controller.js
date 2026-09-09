@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const Application = require('../models/Application');
 const Job = require('../models/Job');
 const ApiError = require('../utils/ApiError');
-const { uploadToS3, getPresignedUrl, deleteS3Object } = require('../config/s3');
+const { uploadToStorage, getSignedUrl, deleteStorageObject } = require('../config/storage');
 
 // ---------------------------------------------------------------------------
 // Candidate
@@ -16,12 +16,12 @@ const { uploadToS3, getPresignedUrl, deleteS3Object } = require('../config/s3');
  * Flow:
  *   1. Validate job exists and is active
  *   2. Check for duplicate application
- *   3. Upload resume to S3
+ *   3. Upload resume to Supabase Storage
  *   4. Save application to MongoDB
- *   5. If MongoDB save fails → rollback: delete the S3 object
+ *   5. If MongoDB save fails → rollback: delete the Supabase object
  */
 const applyToJob = async (req, res, next) => {
-  let s3Key = null; // Track for rollback
+  let storagePath = null; // Track for rollback
 
   try {
     const { jobId, coverLetter } = req.body;
@@ -59,12 +59,11 @@ const applyToJob = async (req, res, next) => {
       throw ApiError.conflict('You have already applied to this job');
     }
 
-    // 4. Upload resume buffer to S3 (no disk write)
-    // Generate a unique key: resumes/<userId>/<timestamp>-<random>.pdf
-    const uniqueId = crypto.randomBytes(8).toString('hex');
-    s3Key = `resumes/${req.user._id}/${Date.now()}-${uniqueId}.pdf`;
+    // 4. Upload resume buffer to Supabase Storage (no disk write)
+    // Generate a unique path: resumes/<timestamp>-<userId>.pdf
+    storagePath = `resumes/${Date.now()}-${req.user._id}.pdf`;
 
-    await uploadToS3(req.file.buffer, s3Key, 'application/pdf');
+    await uploadToStorage(req.file.buffer, storagePath, 'application/pdf');
 
     // 5. Save application to MongoDB
     let application;
@@ -72,22 +71,22 @@ const applyToJob = async (req, res, next) => {
       application = await Application.create({
         job: jobId,
         candidate: req.user._id,
-        resumeS3Key: s3Key,
+        resumeUrl: storagePath,
         coverLetter: coverLetter || '',
       });
     } catch (dbError) {
-      // ⚠️ ROLLBACK: MongoDB save failed — delete the already-uploaded S3 object
+      // ⚠️ ROLLBACK: MongoDB save failed — delete the already-uploaded storage object
       console.error(
-        `[Rollback] MongoDB save failed. Deleting S3 object: ${s3Key}`
+        `[Rollback] MongoDB save failed. Deleting storage object: ${storagePath}`
       );
       try {
-        await deleteS3Object(s3Key);
-        console.log(`[Rollback] S3 object deleted successfully: ${s3Key}`);
-      } catch (s3DeleteError) {
-        // Log the orphaned S3 object for manual cleanup
+        await deleteStorageObject(storagePath);
+        console.log(`[Rollback] Storage object deleted successfully: ${storagePath}`);
+      } catch (storageDeleteError) {
+        // Log the orphaned storage object for manual cleanup
         console.error(
-          `[Rollback] CRITICAL: Failed to delete orphaned S3 object: ${s3Key}`,
-          s3DeleteError.message
+          `[Rollback] CRITICAL: Failed to delete orphaned storage object: ${storagePath}`,
+          storageDeleteError.message
         );
       }
       throw dbError; // Re-throw the original DB error
@@ -246,11 +245,11 @@ const updateApplicationStatus = async (req, res, next) => {
 };
 
 // ---------------------------------------------------------------------------
-// Resume Access (Pre-signed URL)
+// Resume Access (Signed URL)
 // ---------------------------------------------------------------------------
 
 /**
- * @desc    Get a pre-signed URL to view/download a resume
+ * @desc    Get a signed URL to view/download a resume
  * @route   GET /api/applications/:id/resume
  * @access  Private (CANDIDATE who applied OR EMPLOYER who owns the job)
  */
@@ -275,13 +274,13 @@ const getResumeUrl = async (req, res, next) => {
       throw ApiError.forbidden('You are not authorized to view this resume');
     }
 
-    // Generate pre-signed URL (expires in 15 minutes)
-    const presignedUrl = await getPresignedUrl(application.resumeS3Key, 900);
+    // Generate signed URL (expires in 15 minutes)
+    const signedUrl = await getSignedUrl(application.resumeUrl, 60 * 15);
 
     res.status(200).json({
       success: true,
       data: {
-        resumeUrl: presignedUrl,
+        resumeUrl: signedUrl,
         expiresIn: '15 minutes',
       },
     });

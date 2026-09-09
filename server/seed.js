@@ -187,7 +187,7 @@ Responsibilities:
       {
         job: jobs[0]._id, // Stripe Senior Full Stack
         candidate: candidate._id,
-        resumeS3Key: 'resumes/demo-alex-mercer-resume.pdf',
+        resumeUrl: 'resumes/demo-alex-mercer-resume.pdf',
         coverLetter:
           'I have spent 5+ years building fintech APIs and reactive UIs. Stripe has always been my benchmark for developer experience and engineering excellence.',
         status: 'INTERVIEW',
@@ -196,14 +196,14 @@ Responsibilities:
       {
         job: jobs[2]._id, // Vercel
         candidate: candidate._id,
-        resumeS3Key: 'resumes/demo-alex-mercer-resume.pdf',
+        resumeUrl: 'resumes/demo-alex-mercer-resume.pdf',
         coverLetter: 'Passionate about frontend performance, design tokens, and Next.js ecosystem innovations.',
         status: 'PENDING',
       },
       {
         job: jobs[0]._id, // Stripe Senior Full Stack
         candidate: candidate2._id,
-        resumeS3Key: 'resumes/demo-sarah-connor-resume.pdf',
+        resumeUrl: 'resumes/demo-sarah-connor-resume.pdf',
         coverLetter:
           'Experienced with high-concurrency microservices, distributed transaction rollback mechanisms, and containerized architectures.',
         status: 'PENDING',

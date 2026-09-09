@@ -214,8 +214,8 @@ async function runTests() {
       name: 'my_resume.pdf',
     }, candidateToken);
     assert(res.status === 201, `Status 201 (got ${res.status})`);
-    assert(res.data.data.application.resumeS3Key.startsWith('resumes/'), 'S3 key starts with resumes/');
-    assert(res.data.data.application.resumeS3Key.endsWith('.pdf'), 'S3 key ends with .pdf');
+    assert(res.data.data.application.resumeUrl.startsWith('resumes/'), 'Storage path starts with resumes/');
+    assert(res.data.data.application.resumeUrl.endsWith('.pdf'), 'Storage path ends with .pdf');
     assert(res.data.data.application.status === 'PENDING', 'Status is PENDING');
     assert(res.data.data.application.coverLetter === 'I am excited to apply for this position.', 'Cover letter saved');
     const applicationId = res.data.data.application._id;

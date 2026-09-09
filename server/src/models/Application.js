@@ -16,7 +16,7 @@ const applicationSchema = new mongoose.Schema(
       required: [true, 'Application must reference a candidate'],
       index: true,
     },
-    resumeS3Key: {
+    resumeUrl: {
       type: String,
       required: [true, 'Resume is required to apply'],
     },
