@@ -6,8 +6,6 @@ import {
   Phone,
   Clock,
   User,
-  CheckCircle2,
-  AlertCircle,
 } from 'lucide-react';
 import { applicationApi } from '../api/application.api';
 import { StatusBadge } from './ui/Badge';

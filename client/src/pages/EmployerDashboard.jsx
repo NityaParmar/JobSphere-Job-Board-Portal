@@ -11,22 +11,12 @@ import {
   PlayCircle,
   ExternalLink,
   MapPin,
-  Calendar,
-  Layers,
-  Archive,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
-  Building,
-  User,
-  Phone,
-  Mail,
 } from 'lucide-react';
 import { jobApi } from '../api/job.api';
 import { applicationApi } from '../api/application.api';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
-import { StatusBadge, Badge } from '../components/ui/Badge';
+import { Badge } from '../components/ui/Badge';
 import {
   Table,
   TableHeader,
