@@ -9,6 +9,8 @@
  * Requires server running on port 5000
  */
 
+require('dotenv').config();
+
 const BASE_URL = 'http://localhost:5000/api';
 
 async function request(method, path, body = null, token = null) {
@@ -80,15 +82,14 @@ function createFakeTextFile(sizeInBytes = 1024) {
 
 async function runTests() {
   const ts = Date.now();
-  const hasS3 = !!(
-    process.env.AWS_ACCESS_KEY_ID &&
-    process.env.AWS_SECRET_ACCESS_KEY &&
-    process.env.AWS_S3_BUCKET_NAME
+  const hasStorage = !!(
+    process.env.SUPABASE_URL &&
+    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY)
   );
 
   console.log('\n=== PHASE 4: Application & Upload Tests ===\n');
-  if (!hasS3) {
-    console.log('⚠️  AWS credentials not configured. S3-dependent tests will be skipped.\n');
+  if (!hasStorage) {
+    console.log('⚠️  Supabase storage credentials not configured. Storage-dependent tests will be skipped.\n');
   }
 
   // --- Setup: Register users & create a job ---
@@ -199,12 +200,12 @@ async function runTests() {
   res = await request('GET', `/applications/job/${jobId}`, null, otherEmployerToken);
   assert(res.status === 403, `Status 403 (got ${res.status})`);
 
-  // --- S3-dependent tests ---
-  if (hasS3) {
-    console.log('\n--- S3 Integration Tests ---\n');
+  // --- Supabase Storage tests ---
+  if (hasStorage) {
+    console.log('\n--- Supabase Storage Integration Tests ---\n');
 
     // --- Test 10: Successful application with resume upload ---
-    console.log('10. [S3] Apply to job with resume');
+    console.log('10. [Storage] Apply to job with resume');
     res = await uploadRequest('/applications', {
       jobId,
       coverLetter: 'I am excited to apply for this position.',
@@ -221,7 +222,7 @@ async function runTests() {
     const applicationId = res.data.data.application._id;
 
     // --- Test 11: Duplicate application rejected ---
-    console.log('11. [S3] Duplicate application rejected');
+    console.log('11. [Storage] Duplicate application rejected');
     res = await uploadRequest('/applications', { jobId }, {
       buffer: createFakePdf(),
       contentType: 'application/pdf',
@@ -230,20 +231,20 @@ async function runTests() {
     assert(res.status === 409, `Status 409 (got ${res.status})`);
 
     // --- Test 12: Candidate sees application in history ---
-    console.log('12. [S3] Candidate: My applications');
+    console.log('12. [Storage] Candidate: My applications');
     res = await request('GET', '/applications/my', null, candidateToken);
     assert(res.status === 200, `Status 200 (got ${res.status})`);
     assert(res.data.data.count >= 1, `At least 1 application (got ${res.data.data.count})`);
 
     // --- Test 13: Employer views applicants ---
-    console.log('13. [S3] Employer: View applicants for job');
+    console.log('13. [Storage] Employer: View applicants for job');
     res = await request('GET', `/applications/job/${jobId}`, null, employerToken);
     assert(res.status === 200, `Status 200 (got ${res.status})`);
     assert(res.data.data.count >= 1, `At least 1 applicant (got ${res.data.data.count})`);
     assert(res.data.data.applications[0].candidate.name === 'App Candidate', 'Candidate populated');
 
     // --- Test 14: Employer updates status ---
-    console.log('14. [S3] Employer: Update status to INTERVIEW');
+    console.log('14. [Storage] Employer: Update status to INTERVIEW');
     res = await request('PATCH', `/applications/${applicationId}/status`, {
       status: 'INTERVIEW',
       employerNotes: 'Strong candidate, schedule interview.',
@@ -253,39 +254,45 @@ async function runTests() {
     assert(res.data.data.application.employerNotes === 'Strong candidate, schedule interview.', 'Notes saved');
 
     // --- Test 15: Get pre-signed resume URL (candidate) ---
-    console.log('15. [S3] Candidate: Get pre-signed resume URL');
+    console.log('15. [Storage] Candidate: Get pre-signed resume URL');
     res = await request('GET', `/applications/${applicationId}/resume`, null, candidateToken);
     assert(res.status === 200, `Status 200 (got ${res.status})`);
-    assert(res.data.data.resumeUrl.includes('X-Amz-Signature'), 'Pre-signed URL contains signature');
+    assert(
+      res.data.data.resumeUrl.includes('token=') || res.data.data.resumeUrl.includes('/sign/'),
+      'Pre-signed URL contains token/signature'
+    );
     assert(res.data.data.expiresIn === '15 minutes', 'Expiry is 15 minutes');
 
     // --- Test 16: Get pre-signed resume URL (employer) ---
-    console.log('16. [S3] Employer: Get pre-signed resume URL');
+    console.log('16. [Storage] Employer: Get pre-signed resume URL');
     res = await request('GET', `/applications/${applicationId}/resume`, null, employerToken);
     assert(res.status === 200, `Status 200 (got ${res.status})`);
-    assert(res.data.data.resumeUrl.includes('X-Amz-Signature'), 'Pre-signed URL for employer');
+    assert(
+      res.data.data.resumeUrl.includes('token=') || res.data.data.resumeUrl.includes('/sign/'),
+      'Pre-signed URL for employer'
+    );
 
     // --- Test 17: Other employer cannot see resume ---
-    console.log('17. [S3] Other employer: Cannot see resume');
+    console.log('17. [Storage] Other employer: Cannot see resume');
     res = await request('GET', `/applications/${applicationId}/resume`, null, otherEmployerToken);
     assert(res.status === 403, `Status 403 (got ${res.status})`);
 
     // --- Test 18: Employer: Status filter ---
-    console.log('18. [S3] Employer: Filter by status');
+    console.log('18. [Storage] Employer: Filter by status');
     res = await request('GET', `/applications/job/${jobId}?status=INTERVIEW`, null, employerToken);
     assert(res.status === 200, `Status 200 (got ${res.status})`);
     const allInterview = res.data.data.applications.every((a) => a.status === 'INTERVIEW');
     assert(allInterview, 'All filtered applications are INTERVIEW');
 
     // --- Test 19: Employer: Update to ACCEPTED ---
-    console.log('19. [S3] Employer: Update status to ACCEPTED');
+    console.log('19. [Storage] Employer: Update status to ACCEPTED');
     res = await request('PATCH', `/applications/${applicationId}/status`, {
       status: 'ACCEPTED',
     }, employerToken);
     assert(res.status === 200, `Status 200 (got ${res.status})`);
     assert(res.data.data.application.status === 'ACCEPTED', 'Status updated to ACCEPTED');
   } else {
-    console.log('\n--- Skipped S3 tests (10-19). Set AWS env vars to run them. ---\n');
+    console.log('\n--- Skipped storage tests (10-19). Set Supabase env vars to run them. ---\n');
   }
 
   // --- Test 20: Reject file over 5MB ---
