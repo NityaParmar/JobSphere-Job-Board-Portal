@@ -275,7 +275,8 @@ const getResumeUrl = async (req, res, next) => {
     }
 
     // Generate signed URL (expires in 15 minutes)
-    const signedUrl = await getSignedUrl(application.resumeUrl, 60 * 15);
+    const fileKey = application.resumeUrl || application.resumeS3Key;
+    const signedUrl = await getSignedUrl(fileKey, 60 * 15);
 
     res.status(200).json({
       success: true,

@@ -18,7 +18,15 @@ const applicationSchema = new mongoose.Schema(
     },
     resumeUrl: {
       type: String,
-      required: [true, 'Resume is required to apply'],
+      required: [
+        function () {
+          return !this.resumeS3Key;
+        },
+        'Resume is required to apply',
+      ],
+    },
+    resumeS3Key: {
+      type: String,
     },
     coverLetter: {
       type: String,
@@ -49,6 +57,14 @@ const applicationSchema = new mongoose.Schema(
     },
   }
 );
+
+// Ensure resumeUrl fallback from legacy resumeS3Key before validation
+applicationSchema.pre('validate', function (next) {
+  if (!this.resumeUrl && this.resumeS3Key) {
+    this.resumeUrl = this.resumeS3Key;
+  }
+  next();
+});
 
 // ---------------------------------------------------------------------------
 // Indexes
